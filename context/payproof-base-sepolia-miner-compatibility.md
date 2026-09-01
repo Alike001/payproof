@@ -19,6 +19,18 @@ direct calls do not count toward Miner request-volume requirements.
 
 No x402 payment was made during these probes.
 
+### 2026-09-01 unpaid x402 recheck
+
+An unpaid `POST https://devnode.telegraphprotocol.com/engine/v1/ask/8453`
+returned HTTP 402 with x402 v2, `eip155:84532`, Circle Base Sepolia USDC,
+`10000` base units, and the documented Telegraph receiver. The challenge's
+resource URL was `http://devnode.telegraphprotocol.com/v1/ask/8453`: the same
+official host, but with the node's internal HTTP scheme and its `/engine` proxy
+prefix removed. PayProof therefore permits only this narrowly matched same-host
+rewrite while requiring the actual outbound request and configured node origin
+to use HTTPS. A different host, Miner path, query, fragment, network, or asset
+still fails before signing. No payment signature was created or submitted.
+
 ## Evidence Boundaries
 
 - Direct Miner endpoint calls test input/output compatibility only.

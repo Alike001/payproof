@@ -33,7 +33,22 @@ describe("serverEnvSchema", () => {
     expect(
       serverEnvSchema.safeParse({
         ...validEnvironment,
+        TELEGRAPH_NODE_URL: "https://node.telegraph.example/untrusted-prefix",
+      }).success,
+    ).toBe(false);
+    expect(
+      serverEnvSchema.safeParse({
+        ...validEnvironment,
         TELEGRAPH_EVM_PRIVATE_KEY: "not-a-private-key",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects a per-call x402 limit above the hard 0.05 test-USDC cap", () => {
+    expect(
+      serverEnvSchema.safeParse({
+        ...validEnvironment,
+        X402_MAX_CALL_USDC_UNITS: "50001",
       }).success,
     ).toBe(false);
   });

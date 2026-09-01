@@ -90,7 +90,7 @@ delay the live quote, transfer, verification, and receipt path.
 
   **Review gate 1:** Pause and give Abu a plain-language walkthrough of the live shell, mobile layout, wallet connection, free sign-in signature, and creator protection. Record requested changes before continuing.
 
-- [ ] **4. [Lead] Implement the spend-safe Telegraph x402 transport**
+- [x] **4. [Lead] Implement the spend-safe Telegraph x402 transport**
   Spec ref: `spec.md > Telegraph Integration > Server-only x402 client`; `spec.md > Rate Limiting And Abuse Controls`; `spec.md > Security And Privacy`
   What to build: Add the Node-only Telegraph client, direct-ask envelope, x402 EVM signer restricted to `eip155:84532`, official-origin/asset allowlists, pre-sign challenge policy, per-call cap, atomic daily budget reservation, primary/backup action idempotency, timeout/cooldown helpers, settlement-proof capture, and redacted Telegraph-call persistence. Do not add a production mock or local fallback.
   Acceptance: The browser bundle contains no x402 key; chain `8453`, every non-84532 network, wrong asset/origin, calls over 0.05 test USDC, and exhausted daily budget fail before signing; retries cannot silently buy the same action twice; raw headers/signatures are never logged.

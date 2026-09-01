@@ -134,6 +134,30 @@ The participant accepted all five proposed safeguards:
   `eip155:84532` and requires a regression test rejecting `8453`.
 - Live Miner catalog shapes differ, so each Miner receives a dedicated adapter
   before normalization. A generic permissive parser is prohibited.
+- A 2026-09-01 unpaid live challenge showed that the Telegraph HTTPS Engine
+  reverse proxy advertises its same-host resource as internal HTTP and removes
+  the `/engine` prefix. The x402 policy deliberately accepts only that exact
+  same-host/path rewrite; the real request remains HTTPS and all other origin or
+  path changes fail before signing.
+
+## 2026-09-01 — Checklist item 4 implementation
+
+- Added a server-only x402 v2 client using the official core and EVM packages,
+  registered only for `eip155:84532`; automatic paid retries are intentionally
+  not used so every challenge is inspected and reserved before signing.
+- Added fixed direct-ask routing, strict challenge/network/asset/origin/amount
+  checks, the hard 50,000-base-unit per-call cap, a configurable lower cap,
+  timeout/cooldown helpers, settlement normalization, and persistence redaction.
+- Hardened `reserve_telegraph_spend` so the same action and attempt role never
+  receives a second signing reservation; primary and backup remain separately
+  limited attempts. Daily spend remains serialized with an advisory lock.
+- Verified 27 focused TypeScript tests, 30 PostgreSQL assertions, schema lint,
+  the full 71-test application suite, production build, and zero x402/private
+  key identifiers in browser assets. The unpaid live challenge was inspected;
+  no signature or test-USDC payment was submitted.
+- Production dependency audit has zero high or critical findings. The 22
+  moderate findings are the already documented wallet-connector dependency
+  family; no new x402 package finding was reported.
 
 ## 2026-09-01 — Build checklist preferences
 
