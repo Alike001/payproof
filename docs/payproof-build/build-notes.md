@@ -207,3 +207,40 @@ Codex implemented the initial shell centrally so the technical foundation did
 not wait on branch coordination. The teammate workflow remains intact: future
 UI/testing slices use short pull requests reviewed by Abu. No teammate
 contribution or review is claimed for this first commit.
+
+## 2026-09-01 — Checklist item 2 implementation
+
+### Delivered
+
+- Added exact minor-unit money helpers for NGN, USD, EUR, GBP, and six-decimal
+  USDC using `bigint` plus Decimal.js with explicit half-up rounding.
+- Added strict Zod boundaries for supported currencies, invoice inputs,
+  environment variables, and normalized EIP-55 wallet addresses.
+- Initialized Supabase with the five accepted tables, constraints, indexes,
+  Row Level Security, immutable commercial/payment fields, and generated
+  TypeScript database types.
+- Added atomic database functions for idempotent Telegraph-spend reservation
+  and payment finalization that requires a successful Telegraph call.
+- Added cookie-aware browser/server clients and a server-only privileged client;
+  no service credential is accepted by browser code.
+- Bounded persisted integer amounts to JavaScript's safe-integer maximum so the
+  generated PostgREST number types cannot silently lose money precision.
+
+### Verification evidence
+
+- The schema was recreated from migrations and seed data on the official
+  Supabase Postgres `17.6.1.165` image.
+- All 26 pgTAP schema, constraint, RLS, policy, and function checks passed.
+- The database behavior suite proved owner isolation, blocked forged inserts,
+  immutable invoice fields, spend-budget idempotency, budget rejection, and
+  atomic Telegraph-backed payment finalization.
+- Supabase database lint returned no schema errors, and regenerated TypeScript
+  types exactly matched the tracked file.
+- ESLint and strict TypeScript passed; 40 unit tests passed; the production
+  Next.js build completed successfully; `git diff --check` found no defects.
+
+### Team execution note
+
+This security-sensitive foundation remains lead-owned. The teammate receives
+the generated database types and public DTO contracts rather than editing RLS,
+money arithmetic, privileged clients, or atomic functions directly.

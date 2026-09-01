@@ -1,0 +1,6 @@
+-- PayProof intentionally seeds no authenticated identity.
+--
+-- Supabase Auth owns `auth.users`, so local invoice fixtures are created by the
+-- integration tests after they create a disposable test user. This keeps
+-- `supabase db reset` deterministic across Auth schema versions and avoids a
+-- fake production-style account in the repository.

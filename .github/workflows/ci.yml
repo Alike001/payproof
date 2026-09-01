@@ -36,3 +36,40 @@ jobs:
 
       - name: Production build
         run: npm run build
+
+  database:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Use Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Start local Supabase database
+        run: npm run db:start
+
+      - name: Rebuild migrations from zero
+        run: npm run db:reset
+
+      - name: Lint database schema
+        run: npm run db:lint
+
+      - name: Run RLS and database contract tests
+        run: npm run db:test
+
+      - name: Check generated database types
+        run: |
+          npm run db:types
+          git diff --exit-code -- src/lib/database/types.ts
+
+      - name: Stop local Supabase
+        if: always()
+        run: npm run db:stop

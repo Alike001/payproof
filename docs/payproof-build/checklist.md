@@ -76,7 +76,7 @@ delay the live quote, transfer, verification, and receipt path.
   Acceptance: A first-time visitor sees who PayProof is for, what it does, that funds are testnet-only, and the two actions **Create an invoice** and **View my invoices**. No secret is tracked, no existing research file is lost, and CI can reproduce a clean install.
   Verify: Run `npm ci`, `npm run lint`, `npm run typecheck`, `npm run test:run`, and `npm run build`; run a secret-pattern scan over tracked files; open the landing page at mobile and desktop widths; review the teammate PR before merging.
 
-- [ ] **2. [Lead] Build the exact money core and Supabase database contract**
+- [x] **2. [Lead] Build the exact money core and Supabase database contract**
   Spec ref: `spec.md > Database Design`; `spec.md > Money And Quote Rules`; `prd.md > Epic 3: Create and share an invoice`
   What to build: Initialize Supabase locally; add the five tables, constraints, indexes, RLS policies, atomic finalization/spend functions, generated TypeScript types, server/browser/admin clients, strict environment schema, supported-currency schema, address normalization, and Decimal.js minor-unit/USDC conversion helpers. Add fixtures and unit/integration tests before any page writes data.
   Acceptance: NGN, USD, EUR, and GBP inputs accept at most two decimal places; stored local values are integers; USDC values are six-decimal integer units; USD parity is exact; invalid/negative/zero/scientific-notation amounts fail; anonymous users cannot enumerate data; cross-wallet creator reads fail.
