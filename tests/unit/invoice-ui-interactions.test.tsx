@@ -11,6 +11,8 @@ import type {
 
 let container: HTMLDivElement | null = null;
 let root: Root | null = null;
+let originalClipboardDescriptor: PropertyDescriptor | undefined;
+let originalShareDescriptor: PropertyDescriptor | undefined;
 
 const sampleReadyState: PublicInvoicePageState = {
   kind: "ready",
@@ -32,10 +34,27 @@ const sampleReadyState: PublicInvoicePageState = {
 };
 
 beforeEach(() => {
+  originalClipboardDescriptor = Object.getOwnPropertyDescriptor(
+    navigator,
+    "clipboard",
+  );
+  originalShareDescriptor = Object.getOwnPropertyDescriptor(navigator, "share");
+  vi.useFakeTimers();
   container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
 });
+
+function restoreNavigatorProperty(
+  property: "clipboard" | "share",
+  descriptor: PropertyDescriptor | undefined,
+) {
+  if (descriptor) {
+    Object.defineProperty(navigator, property, descriptor);
+    return;
+  }
+  Reflect.deleteProperty(navigator, property);
+}
 
 afterEach(() => {
   if (root) {
@@ -48,6 +67,8 @@ afterEach(() => {
     container.remove();
     container = null;
   }
+  restoreNavigatorProperty("clipboard", originalClipboardDescriptor);
+  restoreNavigatorProperty("share", originalShareDescriptor);
   vi.restoreAllMocks();
   vi.useRealTimers();
 });
@@ -151,6 +172,19 @@ describe("Invoice UI Interaction Regression Coverage", () => {
 
     expect(shareBtn.textContent).not.toContain("Link Copied!");
     expect(container?.textContent).toContain("Could not copy link automatically");
+
+    Object.defineProperty(navigator, "clipboard", {
+      value: undefined,
+      writable: true,
+      configurable: true,
+    });
+
+    await act(async () => {
+      shareBtn.click();
+    });
+
+    expect(shareBtn.textContent).not.toContain("Link Copied!");
+    expect(container?.textContent).toContain("Could not copy link automatically");
   });
 
   it("4. does not fall back to clipboard or claim success when native Share throws AbortError", async () => {
@@ -227,16 +261,17 @@ describe("Invoice UI Interaction Regression Coverage", () => {
     expect(container?.textContent).toContain("Open");
     expect(container?.textContent).not.toContain("Cancelled");
 
-    // Sub-case B: Cancellation action throws an error
-    const throwingCancel = vi
-      .fn()
-      .mockRejectedValue(new Error("Server error"));
+    // Sub-case B: Cancellation action returns an explicit failure
+    const rejectedCancel = vi.fn().mockResolvedValue({
+      ok: false,
+      message: "This invoice could not be cancelled and remains open.",
+    });
     await act(async () => {
       root?.render(
         <CreatorDashboard
           items={[item]}
           recipientAddress="0x1234567890abcdef"
-          onCancelInvoice={throwingCancel}
+          onCancelInvoice={rejectedCancel}
         />,
       );
     });
@@ -253,6 +288,40 @@ describe("Invoice UI Interaction Regression Coverage", () => {
     ).find((b) => b.textContent?.includes("Yes, cancel invoice"));
     await act(async () => {
       confirmBtn2?.click();
+    });
+
+    expect(rejectedCancel).toHaveBeenCalledWith("inv_1");
+    expect(container?.textContent).toContain(
+      "This invoice could not be cancelled and remains open.",
+    );
+    expect(container?.textContent).toContain("Open");
+
+    // Sub-case C: Cancellation action throws an error
+    const throwingCancel = vi
+      .fn()
+      .mockRejectedValue(new Error("Server error"));
+    await act(async () => {
+      root?.render(
+        <CreatorDashboard
+          items={[item]}
+          recipientAddress="0x1234567890abcdef"
+          onCancelInvoice={throwingCancel}
+        />,
+      );
+    });
+
+    const cancelBtn3 = Array.from(
+      container?.querySelectorAll("button") || [],
+    ).find((b) => b.textContent?.includes("Cancel"));
+    await act(async () => {
+      cancelBtn3?.click();
+    });
+
+    const confirmBtn3 = Array.from(
+      container?.querySelectorAll("button") || [],
+    ).find((b) => b.textContent?.includes("Yes, cancel invoice"));
+    await act(async () => {
+      confirmBtn3?.click();
     });
 
     expect(container?.textContent).toContain(
