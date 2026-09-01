@@ -82,7 +82,7 @@ delay the live quote, transfer, verification, and receipt path.
   Acceptance: NGN, USD, EUR, and GBP inputs accept at most two decimal places; stored local values are integers; USDC values are six-decimal integer units; USD parity is exact; invalid/negative/zero/scientific-notation amounts fail; anonymous users cannot enumerate data; cross-wallet creator reads fail.
   Verify: Run `npx supabase db reset`, `npx supabase db lint`, generate types with the documented Supabase CLI command, run `npm run test:run -- tests/unit/money` and database/RLS integration tests, then run the full lint/typecheck suite.
 
-- [ ] **3. [Lead, teammate review] Prove wallet connection and creator Web3 authentication**
+- [x] **3. [Lead, teammate review] Prove wallet connection and creator Web3 authentication**
   Spec ref: `spec.md > Components And Responsibilities > Wallet identity`; `spec.md > Data Flow > 1. Creator authentication`; `prd.md > Epic 2: Identify the invoice creator`
   What to build: Configure RainbowKit/Wagmi/Viem for Base Sepolia only with SSR, connect the selected EIP-1193 provider to Supabase `signInWithWeb3`, add cookie-aware session handling and the server `require-creator` guard, derive the receiving address from the verified identity, and render connected/signed-out/error states. The teammate validates wording and mobile wallet affordances without changing auth code.
   Acceptance: Viewing a public invoice needs no login; creating or viewing history requires a free wallet signature; forged wallet fields cannot change creator or recipient; a different signed wallet cannot access another creator's dashboard; secrets remain server-only.

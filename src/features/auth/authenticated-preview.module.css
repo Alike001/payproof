@@ -1,0 +1,6 @@
+.panel { width: min(100%, 620px); margin-top: 18px; border: 1px solid #b9e4d4; border-radius: 18px; background: var(--color-success-soft); padding: 22px; }
+.ready { display: inline-block; color: var(--color-success); font-size: 0.72rem; font-weight: 850; letter-spacing: 0.09em; text-transform: uppercase; }
+.panel h2 { margin: 10px 0 8px; font-size: 1.2rem; }
+.panel p { margin: 0; color: #365c50; line-height: 1.55; overflow-wrap: anywhere; }
+.actions { margin-top: 18px; }
+.actions a { display: inline-flex; min-height: 42px; align-items: center; border-radius: 11px; background: var(--color-ink); color: white; padding: 0 16px; font-size: 0.86rem; font-weight: 800; }

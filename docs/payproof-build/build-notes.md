@@ -244,3 +244,46 @@ contribution or review is claimed for this first commit.
 This security-sensitive foundation remains lead-owned. The teammate receives
 the generated database types and public DTO contracts rather than editing RLS,
 money arithmetic, privileged clients, or atomic functions directly.
+
+## 2026-09-01 — Checklist item 3 implementation
+
+### Delivered
+
+- Configured Wagmi 2, RainbowKit 2, Viem, and TanStack Query for Base Sepolia
+  only, including cookie storage and server-to-client hydration.
+- Added browser-wallet connection and optional WalletConnect support without
+  bundling RainbowKit's unused Coinbase/Solana connector path.
+- Enabled Supabase Ethereum Web3 authentication and added a clear two-step UI:
+  connect the wallet, then sign a free EIP-4361 message.
+- Added cookie-aware session refresh in Next.js 16 `proxy.ts`, while keeping the
+  authoritative creator check in server-only code and database RLS.
+- Derived the receiving wallet only from Supabase's verified `web3` identity
+  claims for Ethereum network `84532`. User-editable metadata and other networks
+  are rejected.
+- Added signed-out, connected, rejected-signature, authenticated, sign-out,
+  wrong-network, and session/wallet-mismatch presentation states.
+
+### Verification evidence
+
+- 46 normal tests passed; the opt-in live Supabase authentication test passed
+  with two newly generated throwaway wallets.
+- The live test proved EIP-4361 identity issuance, owner invoice access, zero
+  cross-wallet rows, and a blocked forged-owner insert.
+- Browser verification passed connect, cancelled signature, successful free
+  signature, refresh persistence, sign-out, and second-wallet sign-in.
+- The server-rendered creator panel displayed the exact verified session wallet
+  as the future recipient; the client does not submit an editable recipient.
+- Desktop `1440 × 1000` and mobile `390 × 844` inspection found no horizontal
+  overflow and no browser-console errors. Captures are stored in
+  `design/renders/payproof-auth-desktop.png` and `payproof-auth-mobile.png`.
+- ESLint, strict TypeScript, the production Next.js build, and high-severity
+  production dependency audit passed. Compatible overrides pin patched Axios
+  and WebSocket transitive releases; remaining audit findings are moderate
+  upstream wallet-tree advisories with only breaking-major remediation offered.
+
+### Team execution note
+
+The lead owns the identity extraction, session guard, Supabase provider setting,
+and wallet configuration. The teammate's review slice is the wording, 390px
+wallet affordances, and authenticated/signed-out screenshots; no teammate review
+is claimed until Abu routes this checkpoint through the agreed PR process.

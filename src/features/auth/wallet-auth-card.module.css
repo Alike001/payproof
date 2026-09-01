@@ -1,0 +1,88 @@
+.card {
+  width: min(100%, 620px);
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  background: #ffffff;
+  padding: clamp(24px, 5vw, 40px);
+  box-shadow: var(--shadow-card);
+}
+
+.header, .actions, .statusGrid {
+  display: flex;
+  align-items: center;
+}
+
+.header { justify-content: space-between; gap: 16px; }
+
+.step, .network {
+  border-radius: 999px;
+  padding: 7px 10px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.step { background: var(--color-primary-soft); color: var(--color-primary-strong); }
+.network { background: var(--color-warning-soft); color: var(--color-warning); }
+
+.card h2 {
+  margin: 24px 0 10px;
+  max-width: 470px;
+  font-size: clamp(1.7rem, 4vw, 2.45rem);
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+}
+
+.description, .finePrint { color: var(--color-muted); line-height: 1.65; }
+.description { margin: 0; }
+.finePrint { margin: 18px 0 0; font-size: 0.82rem; }
+
+.statusGrid {
+  align-items: stretch;
+  gap: 10px;
+  margin: 28px 0 20px;
+}
+
+.statusItem {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-surface);
+  padding: 14px;
+}
+
+.statusItem span, .statusItem strong { display: block; }
+.statusItem span { color: var(--color-muted); font-size: 0.75rem; margin-bottom: 5px; }
+.statusItem strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.warning, .error {
+  margin: 14px 0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.warning { background: var(--color-warning-soft); color: #704900; }
+.error { background: #fff0ee; color: var(--color-danger); }
+
+.actions { flex-wrap: wrap; gap: 12px; margin-top: 22px; }
+
+.primaryButton, .secondaryButton {
+  min-height: 42px;
+  border-radius: 12px;
+  padding: 0 17px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.primaryButton { border: 1px solid var(--color-primary); background: var(--color-primary); color: white; }
+.secondaryButton { border: 1px solid var(--color-border); background: white; color: var(--color-ink); }
+.primaryButton:disabled, .secondaryButton:disabled { cursor: wait; opacity: 0.65; }
+
+@media (max-width: 540px) {
+  .statusGrid { flex-direction: column; }
+  .card { border-radius: 18px; padding: 22px; }
+}

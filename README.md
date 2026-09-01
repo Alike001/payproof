@@ -26,9 +26,10 @@ Implementation follows the accepted documents in [`docs/payproof-build`](docs/pa
 - [`spec.md`](docs/payproof-build/spec.md)
 - [`checklist.md`](docs/payproof-build/checklist.md)
 
-The current slice contains the responsive product shell. Database, wallet
-identity, live Telegraph calls, and Base Sepolia payment are added in the ordered
-checklist and reviewed at the recorded gates.
+The current slice contains the responsive product shell, exact-money/database
+contract, Base Sepolia-only wallet connection, and free Ethereum wallet sign-in.
+Live Telegraph calls and Base Sepolia payment follow in the ordered checklist
+and are reviewed at the recorded gates.
 
 ## Local development
 
@@ -40,10 +41,17 @@ Requirements:
 ```bash
 cp .env.example .env.local
 npm ci
+npm run supabase:start
 npm run dev
 ```
 
 Open `http://localhost:3000`.
+
+For local wallet sign-in, use the local Supabase API URL and publishable key
+printed by `npm run supabase:start`. Ethereum Web3 auth is enabled in
+`supabase/config.toml`. Add a WalletConnect Cloud project ID to
+`NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` to show the mobile QR connector; browser
+extension wallets remain available without it.
 
 Do not place private keys or service secrets in variables beginning with
 `NEXT_PUBLIC_`. The dedicated Telegraph payer key is testnet-only and must never
@@ -56,6 +64,16 @@ npm run lint
 npm run typecheck
 npm run test:run
 npm run build
+```
+
+The opt-in live auth check creates fresh throwaway wallets at runtime, signs in
+against local Supabase, and proves cross-wallet RLS isolation:
+
+```bash
+PAYPROOF_LIVE_AUTH_TEST=1 \
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 \
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<local-publishable-key> \
+npx vitest run tests/integration/supabase-web3.test.ts
 ```
 
 Run all four with `npm run check` before opening a pull request. Work is split
