@@ -1,4 +1,9 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import { PublicInvoiceCard } from "@/features/invoices/public-invoice-card";
 import type {
   PublicInvoiceDto,
   PublicInvoicePageState,
@@ -71,5 +76,44 @@ describe("Public Invoice Presentation & State Contracts", () => {
 
     const cancelledDto: PublicInvoiceDto = { ...samplePublicInvoice, status: "cancelled" };
     expect(cancelledDto.status).toBe("cancelled");
+  });
+
+  it("renders payable and terminal lifecycle states without changing money", () => {
+    const renderStatus = (status: PublicInvoiceDto["status"]) =>
+      renderToStaticMarkup(
+        createElement(PublicInvoiceCard, {
+          state: {
+            kind: "ready",
+            invoice: { ...samplePublicInvoice, status },
+          },
+        }),
+      );
+
+    expect(renderStatus("open")).toContain("Client Payment Step");
+    expect(renderStatus("overdue")).toContain("remains open for payment");
+    expect(renderStatus("cancelled")).not.toContain("Client Payment Step");
+    expect(renderStatus("verified")).toContain("Verified Receipt");
+    expect(renderStatus("open")).toContain("1,250.00 EUR");
+  });
+
+  it("contains no production route fallback that fabricates invoice or receipt data", () => {
+    const page = readFileSync(
+      join(process.cwd(), "src/app/i/[publicId]/page.tsx"),
+      "utf8",
+    );
+    const reader = readFileSync(
+      join(
+        process.cwd(),
+        "src/lib/invoices/read-public-invoice.server.ts",
+      ),
+      "utf8",
+    );
+
+    expect(page).not.toMatch(/payproof\.example|0x1234|INV-\$\{|new Date/);
+    expect(page).not.toMatch(/includes\(["'](?:cancelled|overdue|verified)/);
+    expect(page).toContain("readPublicInvoicePageState");
+    expect(reader).toContain('import "server-only"');
+    expect(reader).toContain("return unavailableState");
+    expect(reader).not.toMatch(/freelancerName|recipientAddress|status:\s*["']/);
   });
 });

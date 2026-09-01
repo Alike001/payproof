@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type {
   PublicInvoicePageState,
   PublicInvoiceStatus,
@@ -42,6 +42,27 @@ export function PublicInvoiceCard({
 }) {
   const [copied, setCopied] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (feedbackTimer.current) {
+        clearTimeout(feedbackTimer.current);
+      }
+    },
+    [],
+  );
+
+  function clearFeedbackAfter(delayMs: number) {
+    if (feedbackTimer.current) {
+      clearTimeout(feedbackTimer.current);
+    }
+    feedbackTimer.current = setTimeout(() => {
+      setCopied(false);
+      setFeedbackMessage(null);
+      feedbackTimer.current = null;
+    }, delayMs);
+  }
 
   if (state.kind === "not_found") {
     return (
@@ -101,7 +122,7 @@ export function PublicInvoiceCard({
       try {
         await navigator.share(shareData);
         setFeedbackMessage("Shared successfully!");
-        setTimeout(() => setFeedbackMessage(null), 3000);
+        clearFeedbackAfter(3000);
         return;
       } catch (err) {
         if (err instanceof Error && err.name === "AbortError") {
@@ -112,23 +133,29 @@ export function PublicInvoiceCard({
 
     // Fallback to clipboard copying
     try {
+      if (!navigator.clipboard?.writeText) {
+        throw new Error("Clipboard API unavailable");
+      }
       await navigator.clipboard.writeText(shareData.url);
       setCopied(true);
       setFeedbackMessage("Link copied to clipboard!");
-      setTimeout(() => {
-        setCopied(false);
-        setFeedbackMessage(null);
-      }, 3000);
+      clearFeedbackAfter(3000);
     } catch {
+      setCopied(false);
       setFeedbackMessage("Could not copy link automatically. Copy from browser URL bar.");
-      setTimeout(() => setFeedbackMessage(null), 4000);
+      clearFeedbackAfter(4000);
     }
   }
 
   return (
     <section className={styles.card} aria-labelledby="public-invoice-title">
-      <div className={styles.srOnly} role="status" aria-live="polite">
-        {feedbackMessage || `Viewing public invoice ${invoice.reference}. Status: ${invoice.status}.`}
+      <div
+        className={styles.srOnly}
+        role="status"
+        aria-atomic="true"
+        aria-live="polite"
+      >
+        {feedbackMessage ?? ""}
       </div>
 
       <div className={styles.testnetNoticeBanner} role="note">
@@ -213,7 +240,7 @@ export function PublicInvoiceCard({
           </button>
         </div>
         {feedbackMessage ? (
-          <div className={styles.feedbackText} role="status">
+          <div className={styles.feedbackText}>
             {feedbackMessage}
           </div>
         ) : null}
