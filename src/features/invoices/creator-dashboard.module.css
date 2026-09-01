@@ -397,3 +397,16 @@
     padding: 14px;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+
+  .createButton,
+  .primaryActionLink,
+  .secondaryActionButton,
+  .cancelActionButton {
+    transition: none;
+  }
+}

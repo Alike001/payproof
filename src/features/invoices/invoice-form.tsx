@@ -24,6 +24,13 @@ function shortAddress(addr: string) {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 }
 
+function localDateInputValue(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 type FormStep = "form" | "review" | "published";
 
 export function InvoiceForm({
@@ -36,8 +43,6 @@ export function InvoiceForm({
   onPublish?: (input: CreateInvoiceInput) => Promise<PublishInvoiceResult>;
 }) {
   const baseId = useId();
-
-  const todayStr = new Date().toISOString().split("T")[0];
   const [freelancerName, setFreelancerName] = useState(
     initialPrefill?.freelancerName || "",
   );
@@ -51,7 +56,9 @@ export function InvoiceForm({
     initialPrefill?.currency || "NGN",
   );
   const [amount, setAmount] = useState(initialPrefill?.amount || "");
-  const [dueDate, setDueDate] = useState(initialPrefill?.dueDate || todayStr);
+  const [dueDate, setDueDate] = useState(
+    () => initialPrefill?.dueDate || localDateInputValue(),
+  );
 
   const [step, setStep] = useState<FormStep>("form");
   const [fieldErrors, setFieldErrors] = useState<CreateInvoiceFieldErrors>({});
@@ -108,44 +115,28 @@ export function InvoiceForm({
     }
 
     setGeneralError(null);
+    if (!onPublish) {
+      setGeneralError(
+        "Invoice publishing is temporarily unavailable. Your invoice was not created.",
+      );
+      return;
+    }
     setIsSubmitting(true);
 
     try {
-      if (onPublish) {
-        const result = await onPublish(validData);
-        if (result.ok) {
-          setPublishedInvoice(result.invoice);
-          setStep("published");
-        } else {
-          setGeneralError(result.message);
-          if (result.fieldErrors && Object.keys(result.fieldErrors).length > 0) {
-            setFieldErrors(result.fieldErrors);
-            setStep("form");
-          }
-        }
-      } else {
-        // Fallback presentation mode for testing/unwired state
-        const mockItem: CreatorInvoiceItem = {
-          invoiceId: "inv_demo",
-          publicId: "demo-invoice",
-          publicUrl: `${typeof window !== "undefined" ? window.location.origin : ""}/invoices/demo-invoice`,
-          reference: "INV-DEMO-001",
-          clientReference: validData.clientReference || null,
-          description: validData.description,
-          localAmountFormatted: `${validData.amount} ${validData.currency}`,
-          currency: validData.currency,
-          dueDate: validData.dueDate,
-          status: "open",
-          canCancel: true,
-          createdAt: new Date().toISOString(),
-        };
-        setPublishedInvoice(mockItem);
+      const result = await onPublish(validData);
+      if (result.ok) {
+        setPublishedInvoice(result.invoice);
         setStep("published");
+      } else {
+        setGeneralError(result.message);
+        if (result.fieldErrors && Object.keys(result.fieldErrors).length > 0) {
+          setFieldErrors(result.fieldErrors);
+          setStep("form");
+        }
       }
-    } catch (err) {
-      setGeneralError(
-        err instanceof Error ? err.message : "Failed to publish invoice.",
-      );
+    } catch {
+      setGeneralError("Invoice publishing failed safely. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -158,7 +149,9 @@ export function InvoiceForm({
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     } catch {
-      // Fallback if clipboard API is restricted
+      setGeneralError(
+        "The link could not be copied. Select and copy it manually.",
+      );
     }
   }
 
@@ -168,7 +161,7 @@ export function InvoiceForm({
     setDescription("");
     setCurrency("NGN");
     setAmount("");
-    setDueDate(todayStr);
+    setDueDate(localDateInputValue());
     setFieldErrors({});
     setGeneralError(null);
     setPublishedInvoice(null);
@@ -340,6 +333,11 @@ export function InvoiceForm({
             <span className={styles.networkTag}>Base Sepolia</span>
           </div>
 
+          <p className={styles.privacyNotice}>
+            These details will appear on a public invoice link. Do not include
+            phone numbers, email addresses, or other private information.
+          </p>
+
           <div className={styles.fieldGroup}>
             <label className={styles.label} htmlFor={`${baseId}-freelancerName`}>
               Your Display Name / Business Name
@@ -350,6 +348,7 @@ export function InvoiceForm({
               type="text"
               value={freelancerName}
               onChange={(e) => setFreelancerName(e.target.value)}
+              maxLength={100}
               placeholder="e.g. Ada Lovelace Design"
               aria-invalid={Boolean(fieldErrors.freelancerName)}
               aria-describedby={
@@ -374,6 +373,7 @@ export function InvoiceForm({
               type="text"
               value={clientReference}
               onChange={(e) => setClientReference(e.target.value)}
+              maxLength={100}
               placeholder="e.g. Acme Corp / Project #402"
               aria-invalid={Boolean(fieldErrors.clientReference)}
               aria-describedby={
@@ -397,6 +397,7 @@ export function InvoiceForm({
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              maxLength={500}
               placeholder="Describe the services, deliverables, or milestone completed"
               aria-invalid={Boolean(fieldErrors.description)}
               aria-describedby={

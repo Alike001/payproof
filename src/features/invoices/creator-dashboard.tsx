@@ -67,40 +67,36 @@ export function CreatorDashboard({
       setCopiedId(item.invoiceId);
       setTimeout(() => setCopiedId(null), 2500);
     } catch {
-      // Fallback
+      setActionError(
+        "The invoice link could not be copied. Open it and copy the address manually.",
+      );
     }
   }
 
   async function handleConfirmCancel(invoiceId: string) {
     setActionError(null);
+    if (!onCancelInvoice) {
+      setActionError(
+        "Invoice cancellation is temporarily unavailable. The invoice remains open.",
+      );
+      setConfirmCancelId(null);
+      return;
+    }
     setCancellingId(invoiceId);
 
     try {
-      if (onCancelInvoice) {
-        const res = await onCancelInvoice(invoiceId);
-        if (res.ok) {
-          setInvoiceList((prev) =>
-            prev.map((inv) =>
-              inv.invoiceId === invoiceId ? res.invoice : inv,
-            ),
-          );
-        } else {
-          setActionError(res.message);
-        }
-      } else {
-        // Fallback UI state update for unwired callback
+      const res = await onCancelInvoice(invoiceId);
+      if (res.ok) {
         setInvoiceList((prev) =>
           prev.map((inv) =>
-            inv.invoiceId === invoiceId
-              ? { ...inv, status: "cancelled" as const, canCancel: false }
-              : inv,
+            inv.invoiceId === invoiceId ? res.invoice : inv,
           ),
         );
+      } else {
+        setActionError(res.message);
       }
-    } catch (err) {
-      setActionError(
-        err instanceof Error ? err.message : "Failed to cancel invoice.",
-      );
+    } catch {
+      setActionError("Invoice cancellation failed safely. Please try again.");
     } finally {
       setCancellingId(null);
       setConfirmCancelId(null);
@@ -143,7 +139,7 @@ export function CreatorDashboard({
         </div>
       ) : null}
 
-      {isLoading ? (
+      {error ? null : isLoading ? (
         <div className={styles.loadingBox} role="status">
           <div className={styles.spinner} aria-hidden="true" />
           <span>Loading your invoices…</span>

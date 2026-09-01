@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createInvoiceInputSchema } from "@/features/invoices/schemas";
 import type {
@@ -49,6 +51,9 @@ describe("Invoice Creator Presentation Contracts", () => {
 
   it("rejects invalid, negative, zero, or over-precise amounts", () => {
     expect(
+      createInvoiceInputSchema.safeParse({ ...sampleInput, amount: "" }).success,
+    ).toBe(false);
+    expect(
       createInvoiceInputSchema.safeParse({ ...sampleInput, amount: "0" }).success,
     ).toBe(false);
     expect(
@@ -57,6 +62,10 @@ describe("Invoice Creator Presentation Contracts", () => {
     ).toBe(false);
     expect(
       createInvoiceInputSchema.safeParse({ ...sampleInput, amount: "10.001" })
+        .success,
+    ).toBe(false);
+    expect(
+      createInvoiceInputSchema.safeParse({ ...sampleInput, amount: "1e3" })
         .success,
     ).toBe(false);
     expect(
@@ -93,5 +102,21 @@ describe("Invoice Creator Presentation Contracts", () => {
       const item: CreatorInvoiceItem = { ...sampleItem, status };
       expect(item.status).toBe(status);
     }
+  });
+
+  it("contains no production fallback that fabricates publish or cancellation success", () => {
+    const invoiceForm = readFileSync(
+      join(process.cwd(), "src/features/invoices/invoice-form.tsx"),
+      "utf8",
+    );
+    const dashboard = readFileSync(
+      join(process.cwd(), "src/features/invoices/creator-dashboard.tsx"),
+      "utf8",
+    );
+
+    expect(invoiceForm).not.toMatch(/inv_demo|demo-invoice|mockItem/);
+    expect(invoiceForm).toContain("Your invoice was not created");
+    expect(dashboard).not.toContain("Fallback UI state update");
+    expect(dashboard).toContain("The invoice remains open");
   });
 });
