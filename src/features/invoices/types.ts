@@ -7,6 +7,12 @@ export type InvoiceStatus =
   | "mismatch"
   | "verified";
 
+export type PublicInvoiceStatus =
+  | "open"
+  | "overdue"
+  | "cancelled"
+  | "verified";
+
 export type CreateInvoiceInput = {
   freelancerName: string;
   clientReference?: string;
@@ -35,6 +41,34 @@ export type CreatorInvoiceItem = {
   canCancel: boolean;
   createdAt: string;
 };
+
+export type PublicInvoiceDto = {
+  publicId: string;
+  publicUrl: string;
+  reference: string;
+  freelancerName: string;
+  clientReference: string | null;
+  description: string;
+  currency: SupportedCurrency;
+  localAmountFormatted: string;
+  dueDate: string;
+  recipientAddress: string;
+  recipientDisplay: string;
+  status: PublicInvoiceStatus;
+  createdAt: string;
+};
+
+export type PublicInvoicePageState =
+  | { kind: "ready"; invoice: PublicInvoiceDto }
+  | {
+      kind: "not_found";
+      message: "This invoice link is invalid or no longer available.";
+    }
+  | {
+      kind: "unavailable";
+      message: "This invoice is temporarily unavailable. Please try again.";
+      retryable: true;
+    };
 
 export type PublishInvoiceResult =
   | { ok: true; invoice: CreatorInvoiceItem }
