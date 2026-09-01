@@ -9,9 +9,11 @@ import { baseSepolia } from "wagmi/chains";
 import { getVerifiedCreatorAddress } from "@/features/auth/creator-identity";
 import { getBrowserDatabaseClient } from "@/lib/database/browser";
 import { normalizeAddress } from "@/lib/address";
+import {
+  type WalletAuthPhase,
+  walletAuthStatusAnnouncement,
+} from "./wallet-auth-status";
 import styles from "./wallet-auth-card.module.css";
-
-type AuthPhase = "idle" | "switching" | "signing" | "signing-out";
 
 function shortAddress(address: string) {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
@@ -63,7 +65,7 @@ export function WalletAuthCard({
   const { connectAsync, connectors, isPending: isConnecting } = useConnect();
   const { switchChainAsync } = useSwitchChain();
   const [creatorAddress, setCreatorAddress] = useState(initialCreatorAddress);
-  const [phase, setPhase] = useState<AuthPhase>("idle");
+  const [phase, setPhase] = useState<WalletAuthPhase>("idle");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -101,18 +103,16 @@ export function WalletAuthCard({
   const isWrongNetwork = isConnected && chainId !== baseSepolia.id;
   const busy = phase !== "idle";
 
-  const statusAnnouncement = useMemo(() => {
-    if (error) return `Error: ${error}`;
-    if (phase === "switching") return "Switching network to Base Sepolia in your wallet…";
-    if (phase === "signing") return "Waiting for message signature in your wallet…";
-    if (phase === "signing-out") return "Signing out of creator session…";
-    if (isConnecting) return "Opening wallet connection prompt…";
-    if (creatorAddress) return `Signed in as creator ${shortAddress(creatorAddress)}.`;
-    if (sessionMismatch) return `Warning: Signed in as ${shortAddress(creatorAddress!)} but connected wallet is ${shortAddress(address!)}.`;
-    if (isWrongNetwork) return "Warning: Wallet connected to wrong network. Please switch to Base Sepolia.";
-    if (isConnected) return `Wallet connected: ${shortAddress(address!)}. Click Sign in free to complete authentication.`;
-    return "Wallet not connected. Connect a wallet to begin.";
-  }, [error, phase, isConnecting, creatorAddress, sessionMismatch, isWrongNetwork, isConnected, address]);
+  const statusAnnouncement = walletAuthStatusAnnouncement({
+    connectedAddress: address,
+    creatorAddress,
+    error,
+    isConnected,
+    isConnecting,
+    isWrongNetwork,
+    phase,
+    sessionMismatch,
+  });
 
   async function signIn() {
     setError(null);
@@ -296,7 +296,7 @@ export function WalletAuthCard({
               <strong>Zero gas cost:</strong> Signatures are off-chain, cost 0 ETH, and send no transaction to the blockchain.
             </li>
             <li>
-              <strong>Cannot move funds:</strong> It is a read-only authentication check. It cannot spend USDC or access your wallet tokens.
+              <strong>Cannot move funds:</strong> It only creates your PayProof sign-in session. It cannot spend USDC or access your wallet tokens.
             </li>
           </ul>
         </div>
@@ -304,4 +304,3 @@ export function WalletAuthCard({
     </section>
   );
 }
-
