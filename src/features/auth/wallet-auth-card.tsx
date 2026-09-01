@@ -101,6 +101,19 @@ export function WalletAuthCard({
   const isWrongNetwork = isConnected && chainId !== baseSepolia.id;
   const busy = phase !== "idle";
 
+  const statusAnnouncement = useMemo(() => {
+    if (error) return `Error: ${error}`;
+    if (phase === "switching") return "Switching network to Base Sepolia in your wallet…";
+    if (phase === "signing") return "Waiting for message signature in your wallet…";
+    if (phase === "signing-out") return "Signing out of creator session…";
+    if (isConnecting) return "Opening wallet connection prompt…";
+    if (creatorAddress) return `Signed in as creator ${shortAddress(creatorAddress)}.`;
+    if (sessionMismatch) return `Warning: Signed in as ${shortAddress(creatorAddress!)} but connected wallet is ${shortAddress(address!)}.`;
+    if (isWrongNetwork) return "Warning: Wallet connected to wrong network. Please switch to Base Sepolia.";
+    if (isConnected) return `Wallet connected: ${shortAddress(address!)}. Click Sign in free to complete authentication.`;
+    return "Wallet not connected. Connect a wallet to begin.";
+  }, [error, phase, isConnecting, creatorAddress, sessionMismatch, isWrongNetwork, isConnected, address]);
+
   async function signIn() {
     setError(null);
     if (!address || !connector) {
@@ -153,42 +166,58 @@ export function WalletAuthCard({
 
   return (
     <section className={styles.card} aria-labelledby="wallet-access-title">
+      <div className={styles.srOnly} role="status" aria-live="polite" aria-atomic="true">
+        {statusAnnouncement}
+      </div>
+
       <div className={styles.header}>
         <span className={styles.step}>Wallet access</span>
         <span className={styles.network}>Base Sepolia</span>
       </div>
+
       <h2 id="wallet-access-title">
-        {creatorAddress ? "You are signed in" : "Connect, then prove it is your wallet"}
+        {creatorAddress
+          ? "You are signed in"
+          : isConnected
+            ? "Step 2: Sign in free to confirm your wallet"
+            : "Connect wallet, then sign in free"}
       </h2>
+
       <p className={styles.description}>
-        Connecting lets PayProof see your public address. The second step asks
-        for a free message signature so nobody else can manage your invoices.
+        Step 1 (<strong>Connect wallet</strong>) shares your public address so PayProof knows where you receive payments.
+        Step 2 (<strong>Sign in free</strong>) asks for a free signature to prove you control that address.
       </p>
 
       <div className={styles.statusGrid}>
         <div className={styles.statusItem}>
-          <span>1 · Wallet</span>
+          <span>1 · Connected Wallet</span>
           <strong>{isConnected && address ? shortAddress(address) : "Not connected"}</strong>
         </div>
         <div className={styles.statusItem}>
-          <span>2 · PayProof account</span>
+          <span>2 · PayProof Session</span>
           <strong>{creatorAddress ? shortAddress(creatorAddress) : "Not signed in"}</strong>
         </div>
       </div>
 
       {sessionMismatch ? (
         <div className={styles.warning} role="alert">
-          This browser is signed in as {shortAddress(creatorAddress!)} but the
-          connected wallet is {shortAddress(address!)}. Sign out before using
+          This browser is signed in as <strong>{shortAddress(creatorAddress!)}</strong> but the
+          connected wallet is <strong>{shortAddress(address!)}</strong>. Sign out before using
           the other wallet.
         </div>
       ) : null}
+
       {isWrongNetwork ? (
         <div className={styles.warning} role="status">
           Switch to Base Sepolia before signing in. No real funds are needed.
         </div>
       ) : null}
-      {error ? <div className={styles.error} role="alert">{error}</div> : null}
+
+      {error ? (
+        <div className={styles.error} role="alert">
+          {error}
+        </div>
+      ) : null}
 
       <div className={styles.actions}>
         {isConnected ? (
@@ -201,7 +230,8 @@ export function WalletAuthCard({
           connectors.map((walletConnector) => (
             <button
               className={styles.secondaryButton}
-              disabled={isConnecting}
+              disabled={isConnecting || busy}
+              aria-busy={isConnecting}
               key={walletConnector.uid}
               onClick={async () => {
                 setError(null);
@@ -221,12 +251,25 @@ export function WalletAuthCard({
             </button>
           ))
         )}
+
         {creatorAddress ? (
-          <button className={styles.secondaryButton} disabled={busy} onClick={signOut} type="button">
+          <button
+            className={styles.secondaryButton}
+            disabled={busy || isConnecting}
+            aria-busy={phase === "signing-out"}
+            onClick={signOut}
+            type="button"
+          >
             {phase === "signing-out" ? "Signing out…" : "Sign out"}
           </button>
         ) : isConnected ? (
-          <button className={styles.primaryButton} disabled={busy} onClick={signIn} type="button">
+          <button
+            className={styles.primaryButton}
+            disabled={busy || isConnecting}
+            aria-busy={busy}
+            onClick={signIn}
+            type="button"
+          >
             {phase === "switching"
               ? "Switching network…"
               : phase === "signing"
@@ -236,9 +279,29 @@ export function WalletAuthCard({
         ) : null}
       </div>
 
-      <p className={styles.finePrint}>
-        A sign-in signature costs no gas, sends no token, and cannot move funds.
-      </p>
+      <details className={styles.disclosure}>
+        <summary className={styles.disclosureSummary}>
+          <span>What am I signing?</span>
+          <span className={styles.disclosureIcon} aria-hidden="true">▾</span>
+        </summary>
+        <div className={styles.disclosureBody}>
+          <p className={styles.disclosureText}>
+            When you click <strong>Sign in free</strong>, your wallet prompts you to sign a readable message.
+          </p>
+          <ul className={styles.disclosureList}>
+            <li>
+              <strong>Proves wallet control:</strong> Confirms you own the public address so nobody else can create or manage your invoices.
+            </li>
+            <li>
+              <strong>Zero gas cost:</strong> Signatures are off-chain, cost 0 ETH, and send no transaction to the blockchain.
+            </li>
+            <li>
+              <strong>Cannot move funds:</strong> It is a read-only authentication check. It cannot spend USDC or access your wallet tokens.
+            </li>
+          </ul>
+        </div>
+      </details>
     </section>
   );
 }
+
