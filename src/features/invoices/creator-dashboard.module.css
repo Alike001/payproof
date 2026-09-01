@@ -1,0 +1,399 @@
+.dashboardContainer {
+  width: min(100%, 620px);
+  box-sizing: border-box;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+
+.headerRow h2 {
+  margin: 0;
+  font-size: clamp(1.4rem, 3.8vw, 2.1rem);
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.subtitle {
+  margin: 4px 0 0;
+  color: var(--color-muted);
+  font-size: 0.88rem;
+}
+
+.walletAddr {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.createButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: 12px;
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  color: #ffffff;
+  padding: 0 18px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.createButton:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+.createButton:focus-visible,
+.primaryActionLink:focus-visible,
+.secondaryActionButton:focus-visible,
+.cancelActionButton:focus-visible,
+.dangerButton:focus-visible,
+.secondaryButton:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+}
+
+.errorBox {
+  margin-bottom: 18px;
+  border-radius: 12px;
+  background: #fff0ee;
+  border: 1px solid #fecaca;
+  color: var(--color-danger);
+  padding: 14px 16px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.loadingBox {
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  background: #ffffff;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--color-muted);
+  font-size: 0.92rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.emptyState {
+  border: 1px dashed var(--color-border);
+  border-radius: 20px;
+  background: #ffffff;
+  padding: 42px 24px;
+  text-align: center;
+}
+
+.emptyIcon {
+  font-size: 2.4rem;
+  margin-bottom: 12px;
+}
+
+.emptyState h3 {
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+}
+
+.emptyState p {
+  margin: 0 auto 20px;
+  max-width: 440px;
+  color: var(--color-muted);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card {
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  background: #ffffff;
+  padding: 20px;
+  box-shadow: var(--shadow-card);
+  transition: border-color 0.15s ease;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.refCol {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.refText {
+  font-size: 1.05rem;
+  font-weight: 850;
+  letter-spacing: -0.02em;
+  color: var(--color-ink);
+}
+
+.clientRefText {
+  font-size: 0.82rem;
+  color: var(--color-muted);
+}
+
+/* Status Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 0.74rem;
+  font-weight: 850;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.badgeOpen {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.badgeOverdue {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.badgeCancelled {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.badgeMismatch {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+}
+
+.badgeVerified {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #86efac;
+}
+
+.description {
+  margin: 0 0 14px;
+  font-size: 0.9rem;
+  color: var(--color-muted);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.metaRow {
+  display: flex;
+  gap: 24px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--color-surface);
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.metaCol {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.metaLabel {
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-muted);
+  font-weight: 700;
+}
+
+.amountText {
+  font-size: 1rem;
+  font-weight: 850;
+  color: var(--color-ink);
+}
+
+.dateText {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+/* Cancel Confirmation Box */
+.cancelConfirmBox {
+  border: 1px solid #fecaca;
+  background: #fff5f5;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  font-size: 0.86rem;
+  color: #991b1b;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cancelConfirmActions {
+  display: flex;
+  gap: 10px;
+}
+
+.dangerButton {
+  min-height: 38px;
+  border-radius: 8px;
+  border: 1px solid #dc2626;
+  background: #dc2626;
+  color: #ffffff;
+  padding: 0 14px;
+  font-weight: 800;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.dangerButton:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.dangerButton:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+/* Card Actions */
+.actionsRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.primaryActionLink,
+.secondaryActionButton,
+.cancelActionButton {
+  min-height: 40px;
+  border-radius: 10px;
+  padding: 0 14px;
+  font-weight: 800;
+  font-size: 0.86rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  box-sizing: border-box;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.primaryActionLink {
+  border: 1px solid var(--color-primary);
+  background: var(--color-primary);
+  color: #ffffff;
+}
+
+.primaryActionLink:hover {
+  background: #1d4ed8;
+}
+
+.secondaryActionButton {
+  border: 1px solid var(--color-border);
+  background: #ffffff;
+  color: var(--color-ink);
+}
+
+.secondaryActionButton:hover {
+  background: var(--color-surface);
+  border-color: #94a3b8;
+}
+
+.cancelActionButton {
+  border: 1px solid #fca5a5;
+  background: #fff5f5;
+  color: #991b1b;
+  margin-left: auto;
+}
+
+.cancelActionButton:hover {
+  background: #fee2e2;
+}
+
+@media (max-width: 540px) {
+  .headerRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .createButton,
+  .primaryActionLink,
+  .secondaryActionButton,
+  .cancelActionButton {
+    width: 100%;
+  }
+  .cancelActionButton {
+    margin-left: 0;
+  }
+  .metaRow {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 360px) {
+  .card {
+    border-radius: 14px;
+    padding: 14px;
+  }
+}

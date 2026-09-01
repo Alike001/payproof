@@ -1,7 +1,7 @@
 import { WorkspaceShell } from "@/components/workspace-shell";
-import { AuthenticatedPreview } from "@/features/auth/authenticated-preview";
 import { WalletAuthCard } from "@/features/auth/wallet-auth-card";
 import { getCreatorSession } from "@/features/auth/creator-session.server";
+import { CreatorDashboard } from "@/features/invoices/creator-dashboard";
 
 export const dynamic = "force-dynamic";
 
@@ -14,10 +14,13 @@ export default async function DashboardPage() {
       title="Your invoices stay tied to your wallet."
       description="Reconnect anywhere, sign a free message, and PayProof can safely show only the invoices created by that verified wallet."
     >
-      <div>
+      <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
         <WalletAuthCard initialCreatorAddress={creator?.address} />
-        {creator ? <AuthenticatedPreview address={creator.address} kind="dashboard" /> : null}
+        {creator ? (
+          <CreatorDashboard items={[]} recipientAddress={creator.address} />
+        ) : null}
       </div>
     </WorkspaceShell>
   );
 }
+
