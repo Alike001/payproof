@@ -47,6 +47,9 @@ export function PublicInvoiceCard({
 }) {
   const [copied, setCopied] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const [locallyVerifiedPublicId, setLocallyVerifiedPublicId] = useState<
+    string | null
+  >(null);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(
@@ -114,6 +117,8 @@ export function PublicInvoiceCard({
   }
 
   const { invoice } = state;
+  const displayedStatus =
+    locallyVerifiedPublicId === invoice.publicId ? "verified" : invoice.status;
 
   async function handleShare() {
     setFeedbackMessage(null);
@@ -175,7 +180,7 @@ export function PublicInvoiceCard({
           <span className={styles.eyebrow}>PayProof Invoice</span>
           <h2 id="public-invoice-title">{invoice.reference}</h2>
         </div>
-        <StatusBadge status={invoice.status} />
+        <StatusBadge status={displayedStatus} />
       </div>
 
       <p className={styles.privacyNotice}>
@@ -199,7 +204,7 @@ export function PublicInvoiceCard({
         </div>
       ) : null}
 
-      {invoice.status === "verified" ? (
+      {displayedStatus === "verified" ? (
         <div className={styles.verifiedBanner} role="status">
           <strong>Verified Receipt:</strong> Payment for this invoice has been
           confirmed on Base Sepolia by Telegraph intelligence.
@@ -264,10 +269,15 @@ export function PublicInvoiceCard({
         ) : null}
       </div>
 
-      {invoice.status === "open" || invoice.status === "overdue" ? (
+      {invoice.status !== "cancelled" &&
+      (invoice.status === "open" ||
+        invoice.status === "overdue" ||
+        invoice.status === "verified" ||
+        state.payment !== null) ? (
         <PublicInvoicePayment
           invoice={invoice}
           initialPayment={state.payment}
+          onVerified={() => setLocallyVerifiedPublicId(invoice.publicId)}
           key={
             state.payment
               ? `${state.payment.paymentId}:${state.payment.state}`

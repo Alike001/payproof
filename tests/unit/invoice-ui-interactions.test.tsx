@@ -8,9 +8,17 @@ import type {
   CreatorInvoiceItem,
   PublicInvoicePageState,
 } from "@/features/invoices/types";
+import type { PublicPaymentResultDto } from "@/features/payments/types";
 
 vi.mock("@/features/payments/public-invoice-payment", () => ({
-  PublicInvoicePayment: () => <div>Client Payment Step</div>,
+  PublicInvoicePayment: ({ onVerified }: { onVerified?: () => void }) => (
+    <div>
+      Client Payment Step
+      <button onClick={onVerified} type="button">
+        Complete mocked verification
+      </button>
+    </div>
+  ),
 }));
 
 let container: HTMLDivElement | null = null;
@@ -36,6 +44,40 @@ const sampleReadyState: PublicInvoicePageState = {
     status: "open",
     createdAt: "2026-09-01T12:00:00Z",
   },
+};
+
+const sampleSubmittedPayment: PublicPaymentResultDto = {
+  paymentId: "66666666-6666-4666-8666-666666666666",
+  quoteId: "77777777-7777-4777-8777-777777777777",
+  state: "submitted",
+  code: "TRANSACTION_PENDING",
+  message: "The transaction is still pending on Base Sepolia.",
+  retryable: true,
+  transaction: {
+    hash: `0x${"c".repeat(64)}`,
+    explorerUrl: `https://sepolia.basescan.org/tx/0x${"c".repeat(64)}`,
+    submittedByWallet: "0xAbcdefABcDEfAbCdefabcdeFABcDEFabCDEfABCD",
+    submittedAt: "2026-09-02T12:05:00.000Z",
+  },
+  expected: {
+    chainId: 84_532,
+    network: "Base Sepolia",
+    token: "USDC",
+    tokenAddress: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+    recipientAddress: "0x1234567890abcdef1234567890abcdef12345678",
+    usdcAmountUnits: "500000000",
+    usdcAmountFormatted: "500.000000",
+  },
+  observed: {
+    chainId: null,
+    tokenAddress: null,
+    recipientAddress: null,
+    amountUnits: null,
+    amountFormatted: null,
+    transactionStatus: null,
+  },
+  evidence: null,
+  receipt: null,
 };
 
 beforeEach(() => {
@@ -96,6 +138,50 @@ function setInputValue(
 }
 
 describe("Invoice UI Interaction Regression Coverage", () => {
+  it("keeps cancelled invoices terminal even when an old payment attempt exists", async () => {
+    await act(async () => {
+      root?.render(
+        <PublicInvoiceCard
+          state={{
+            ...sampleReadyState,
+            invoice: { ...sampleReadyState.invoice, status: "cancelled" },
+            payment: sampleSubmittedPayment,
+          }}
+        />,
+      );
+    });
+
+    expect(container?.textContent).toContain("Payment is permanently disabled");
+    expect(container?.textContent).not.toContain("Client Payment Step");
+    expect(container?.textContent).not.toContain(
+      "Complete mocked verification",
+    );
+  });
+
+  it("updates the invoice header when verification completes in the payment panel", async () => {
+    await act(async () => {
+      root?.render(
+        <PublicInvoiceCard
+          state={{ ...sampleReadyState, payment: sampleSubmittedPayment }}
+        />,
+      );
+    });
+
+    expect(container?.textContent).toContain("Awaiting Payment");
+    const completeButton = Array.from(
+      container?.querySelectorAll("button") ?? [],
+    ).find((button) =>
+      button.textContent?.includes("Complete mocked verification"),
+    );
+    await act(async () => completeButton?.click());
+
+    expect(container?.textContent).not.toContain("Awaiting Payment");
+    expect(container?.textContent).toContain("✓ Verified Receipt");
+    expect(container?.textContent).toContain(
+      "Payment for this invoice has been confirmed on Base Sepolia",
+    );
+  });
+
   it("1. falls back from unavailable/failed native Share API to clipboard copy", async () => {
     const writeTextMock = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, "clipboard", {

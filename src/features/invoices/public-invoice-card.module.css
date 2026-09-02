@@ -331,3 +331,20 @@
     padding: 14px;
   }
 }
+
+@media print {
+  .testnetNoticeBanner,
+  .shareSection,
+  .actionRow,
+  .card button {
+    display: none !important;
+  }
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #cbd5e1 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 24px !important;
+    margin: 0 !important;
+  }
+}
