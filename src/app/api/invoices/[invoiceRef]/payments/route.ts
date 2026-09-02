@@ -4,7 +4,7 @@ export const runtime = "nodejs";
 
 export async function POST(
   request: Request,
-  context: { params: Promise<{ publicId: string }> },
+  context: { params: Promise<{ invoiceRef: string }> },
 ) {
   const requestId = crypto.randomUUID();
   let input: unknown;
@@ -14,7 +14,7 @@ export async function POST(
     input = null;
   }
 
-  const { publicId } = await context.params;
+  const { invoiceRef: publicId } = await context.params;
   try {
     const result = await submitPaymentAttempt(publicId, input, request.headers);
     return paymentResponse(result, requestId);

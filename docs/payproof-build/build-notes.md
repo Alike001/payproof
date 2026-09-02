@@ -551,3 +551,57 @@ is claimed until Abu routes this checkpoint through the agreed PR process.
   all four opt-in payment-service integrations, 144 normal application tests
   with 17 live/opt-in cases skipped, warning-free ESLint, strict TypeScript,
   and the optimized Next.js production build.
+
+## 2026-09-02 — Item 9 lead verification and receipt foundation
+
+- Added a pure exact verifier that requires matching chain `84532`, saved
+  transaction hash, mined-success status, official Base Sepolia test USDC,
+  invoice recipient, and exact integer quote amount. The matched Transfer
+  event's `from` address—not the browser-supplied wallet—becomes the receipt
+  payer.
+- Added deterministic final classifications for wrong chain, hash, reverted
+  transaction, missing transfer, wrong token, wrong recipient, and wrong
+  amount. Not-found and pending evidence remain retryable rather than becoming
+  false final mismatches; incomplete evidence throws and fails closed.
+- Added the strict empty-body verification endpoint, complete browser response
+  validation, six-per-minute database-backed endpoint limiting, 15-second paid
+  action cooldown, and deterministic primary/backup action keys. A saved
+  Verified or Mismatch result is returned without buying more intelligence.
+- Base Sepolia RPC gates paid work only on mining readiness. A pending receipt
+  makes no Telegraph call; a mined receipt still cannot determine the outcome.
+  The existing strict Truvian/INTERLOCK orchestration supplies the only evidence
+  passed into the exact verifier and never calls backup after valid primary
+  evidence, including a valid mismatch.
+- Strengthened atomic database finalization so the referenced paid-success
+  Telegraph call must belong to the exact payment and invoice, while chain,
+  official token, recipient, exact amount, status, normalized source, and
+  observation time are checked again under row locks. Mismatch and unavailable
+  results are recorded separately, and the final payment/invoice transition
+  emits one deduplicated success event.
+- Added a sanitized public payment/receipt DTO and attached the newest payment
+  state to the existing public invoice read. Refreshing the same unguessable URL
+  can therefore recover Submitted, Unavailable, Mismatch, or the permanent
+  Verified receipt without reading raw Miner bodies.
+- The local integration suite proved exact atomic finalization, a one-base-unit
+  wrong-amount mismatch, database rejection of mismatched finalization inputs,
+  pending-without-Telegraph behavior, honest Miner unavailability/cooldown,
+  endpoint limiting, receipt reconstruction after refresh, and concurrent hash
+  protection. Disposable verification fixtures were neutralized and removed;
+  the six real item 5 paid-success records remain intact.
+- No real wallet transfer or new paid Telegraph call was made in this slice.
+  Item 9 remains open until the teammate completes the submitted/mismatch/
+  unavailable/receipt views and the team proves one exact plus one wrong-amount
+  Base Sepolia transaction through the live end-to-end path.
+- The first browser-harness run exposed a Next.js dynamic-route collision:
+  sibling API folders used `[invoiceId]` and `[publicId]` for the same URL
+  position. All invoice mutation routes now share the internal `[invoiceRef]`
+  folder name; external URLs and whether a handler expects the owner ID or
+  public ID are unchanged. A clean cache rebuild and both desktop/mobile
+  Playwright projects then passed. The displaced 346 MB stale `.next` cache was
+  deleted after the successful rebuild; it contained generated output only.
+- Final lead checks passed database lint, 48 pgTAP assertions, the transactional
+  database behavior script, five payment-submission integrations, five
+  verification integrations, 161 normal application tests with 23 live/opt-in
+  cases skipped, warning-free ESLint, strict TypeScript, the clean optimized
+  build, and two production-server browser projects. All disposable rows were
+  removed and the six earlier real paid-success call records remain present.

@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(36);
+select plan(44);
 
 select has_table('public', 'invoices', 'invoices table exists');
 select has_table('public', 'quotes', 'quotes table exists');
@@ -147,9 +147,65 @@ select ok(
 );
 select ok(
   to_regprocedure(
-    'public.finalize_verified_payment(uuid,uuid,text,bigint,text,text,bigint,text)'
+    'public.finalize_verified_payment(uuid,uuid,text,bigint,text,text,bigint,text,timestamp with time zone,text)'
   ) is not null,
   'atomic payment finalization exists'
+);
+select has_column(
+  'public',
+  'payments',
+  'verification_observed_at',
+  'normalized verification observation time is persisted'
+);
+select has_column(
+  'public',
+  'payments',
+  'verification_source',
+  'sanitized verification source is persisted'
+);
+select ok(
+  to_regprocedure(
+    'public.record_payment_verification_result(uuid,uuid,text,text,jsonb,bigint,text,text,bigint,text,timestamp with time zone,text)'
+  ) is not null,
+  'atomic mismatch and unavailable recorder exists'
+);
+select ok(
+  not has_function_privilege(
+    'authenticated',
+    'public.record_payment_verification_result(uuid,uuid,text,text,jsonb,bigint,text,text,bigint,text,timestamp with time zone,text)',
+    'execute'
+  ),
+  'authenticated callers cannot record verification outcomes'
+);
+select ok(
+  has_function_privilege(
+    'service_role',
+    'public.record_payment_verification_result(uuid,uuid,text,text,jsonb,bigint,text,text,bigint,text,timestamp with time zone,text)',
+    'execute'
+  ),
+  'service role can record verification outcomes'
+);
+select has_function(
+  'public',
+  'consume_verification_rate_limit',
+  array['uuid', 'text', 'integer', 'integer'],
+  'atomic verification endpoint rate limiter exists'
+);
+select ok(
+  not has_function_privilege(
+    'authenticated',
+    'public.consume_verification_rate_limit(uuid,text,integer,integer)',
+    'execute'
+  ),
+  'authenticated browsers cannot forge verification request events'
+);
+select ok(
+  has_function_privilege(
+    'service_role',
+    'public.consume_verification_rate_limit(uuid,text,integer,integer)',
+    'execute'
+  ),
+  'service role can consume the verification rate limit'
 );
 select ok(
   not has_function_privilege(
@@ -170,7 +226,7 @@ select ok(
 select ok(
   not has_function_privilege(
     'authenticated',
-    'public.finalize_verified_payment(uuid,uuid,text,bigint,text,text,bigint,text)',
+    'public.finalize_verified_payment(uuid,uuid,text,bigint,text,text,bigint,text,timestamp with time zone,text)',
     'execute'
   ),
   'authenticated callers cannot finalize a verified payment'
@@ -178,7 +234,7 @@ select ok(
 select ok(
   has_function_privilege(
     'service_role',
-    'public.finalize_verified_payment(uuid,uuid,text,bigint,text,text,bigint,text)',
+    'public.finalize_verified_payment(uuid,uuid,text,bigint,text,text,bigint,text,timestamp with time zone,text)',
     'execute'
   ),
   'service role can finalize a verified payment'

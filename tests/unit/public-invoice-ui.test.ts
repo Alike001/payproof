@@ -43,6 +43,7 @@ describe("Public Invoice Presentation & State Contracts", () => {
   it("handles ready, not_found, and unavailable page states", () => {
     const readyState: PublicInvoicePageState = {
       kind: "ready",
+      payment: null,
       invoice: samplePublicInvoice,
     };
     expect(readyState.kind).toBe("ready");
@@ -84,6 +85,7 @@ describe("Public Invoice Presentation & State Contracts", () => {
         createElement(PublicInvoiceCard, {
           state: {
             kind: "ready",
+            payment: null,
             invoice: { ...samplePublicInvoice, status },
           },
         }),

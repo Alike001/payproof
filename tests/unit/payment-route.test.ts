@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const service = vi.hoisted(() => ({ submitPaymentAttempt: vi.fn() }));
 vi.mock("@/features/payments/payment-service.server", () => service);
 
-import { POST } from "@/app/api/invoices/[publicId]/payments/route";
+import { POST } from "@/app/api/invoices/[invoiceRef]/payments/route";
 
 const publicId = "11111111-1111-4111-8111-111111111111";
 
@@ -23,7 +23,7 @@ describe("payment submission Route Handler", () => {
       { method: "POST", body: "{}" },
     );
     const response = await POST(request, {
-      params: Promise.resolve({ publicId }),
+      params: Promise.resolve({ invoiceRef: publicId }),
     });
     expect(response.status).toBe(201);
     expect(service.submitPaymentAttempt).toHaveBeenCalledWith(
@@ -48,7 +48,7 @@ describe("payment submission Route Handler", () => {
         method: "POST",
         body: "{}",
       }),
-      { params: Promise.resolve({ publicId }) },
+      { params: Promise.resolve({ invoiceRef: publicId }) },
     );
     expect(response.status).toBe(200);
   });
@@ -66,7 +66,7 @@ describe("payment submission Route Handler", () => {
         method: "POST",
         body: "{}",
       }),
-      { params: Promise.resolve({ publicId }) },
+      { params: Promise.resolve({ invoiceRef: publicId }) },
     );
     expect(response.status).toBe(429);
     expect(response.headers.get("retry-after")).toBe("9");
@@ -79,7 +79,7 @@ describe("payment submission Route Handler", () => {
         method: "POST",
         body: "{}",
       }),
-      { params: Promise.resolve({ publicId }) },
+      { params: Promise.resolve({ invoiceRef: publicId }) },
     );
     expect(response.status).toBe(503);
     expect(JSON.stringify(await response.json())).not.toContain("secret detail");

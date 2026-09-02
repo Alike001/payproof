@@ -149,6 +149,52 @@ describe.skipIf(!enabled)("local payment submission integration", () => {
     expect(count).toBe(1);
   });
 
+  it("serializes concurrent hashes so only one payment can remain pending", async () => {
+    const invoice = await createInvoice("Concurrent submission");
+    const quoteId = await createQuote(
+      invoice.id,
+      "2026-09-02T11:59:00.000Z",
+      "2026-09-02T12:14:00.000Z",
+    );
+    const common = {
+      quoteId,
+      submittedByWallet: wallet,
+    };
+    const [first, second] = await Promise.all([
+      submitPaymentAttempt(
+        invoice.public_id,
+        { ...common, txHash: `0x${"1".repeat(64)}` },
+        new Headers(),
+        {
+          database: admin,
+          now: () => now,
+          networkHash: () => "f".repeat(64),
+        },
+      ),
+      submitPaymentAttempt(
+        invoice.public_id,
+        { ...common, txHash: `0x${"2".repeat(64)}` },
+        new Headers(),
+        {
+          database: admin,
+          now: () => now,
+          networkHash: () => "e".repeat(64),
+        },
+      ),
+    ]);
+    expect([first, second].filter((result) => result.ok)).toHaveLength(1);
+    expect([first, second]).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ ok: false, code: "PAYMENT_IN_PROGRESS" }),
+      ]),
+    );
+    const { count } = await admin
+      .from("payments")
+      .select("id", { count: "exact", head: true })
+      .eq("invoice_id", invoice.id);
+    expect(count).toBe(1);
+  });
+
   it("rejects an expired quote at the exact boundary", async () => {
     const invoice = await createInvoice("Expired quote submission");
     const quoteId = await createQuote(

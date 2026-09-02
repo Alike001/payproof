@@ -59,7 +59,11 @@ export type PublicInvoiceDto = {
 };
 
 export type PublicInvoicePageState =
-  | { kind: "ready"; invoice: PublicInvoiceDto }
+  | {
+      kind: "ready";
+      invoice: PublicInvoiceDto;
+      payment: PublicPaymentResultDto | null;
+    }
   | {
       kind: "not_found";
       message: "This invoice link is invalid or no longer available.";
@@ -93,3 +97,4 @@ export type DashboardPageModel = {
   items: CreatorInvoiceItem[];
   nextCursor: string | null;
 };
+import type { PublicPaymentResultDto } from "@/features/payments/types";

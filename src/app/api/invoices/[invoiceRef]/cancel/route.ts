@@ -7,10 +7,10 @@ export const runtime = "nodejs";
 
 export async function POST(
   _request: Request,
-  context: { params: Promise<{ invoiceId: string }> },
+  context: { params: Promise<{ invoiceRef: string }> },
 ) {
   const requestId = crypto.randomUUID();
-  const { invoiceId } = await context.params;
+  const { invoiceRef: invoiceId } = await context.params;
   try {
     const result = await cancelCreatorInvoice(invoiceId);
     const status = result.ok

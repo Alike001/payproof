@@ -27,6 +27,7 @@ import { createUserDatabaseClient } from "@/lib/database/server";
 import { getAdminDatabaseClient } from "@/lib/database/admin.server";
 import { getPublicAppUrl } from "@/lib/database/config";
 import { parseLocalAmount } from "@/lib/money";
+import { readLatestPublicPaymentResult } from "@/features/payments/payment-result-read.server";
 
 const invoiceColumns =
   "id,public_id,creator_user_id,creator_wallet,freelancer_name,client_reference,description,currency,amount_minor,minor_unit_decimals,recipient_wallet,due_date,lifecycle,created_at,cancelled_at,verified_at";
@@ -259,16 +260,23 @@ export async function readPublicInvoicePageState(
 ): Promise<PublicInvoicePageState> {
   if (!invoiceIdSchema.safeParse(publicId).success) return notFoundState;
   try {
-    const { data, error } = await getAdminDatabaseClient()
+    const database = getAdminDatabaseClient();
+    const { data, error } = await database
       .from("invoices")
       .select(invoiceColumns)
       .eq("public_id", publicId)
       .maybeSingle();
     if (error) return unavailableState;
     if (!data) return notFoundState;
+    const payment = await readLatestPublicPaymentResult({
+      publicId,
+      invoiceId: data.id,
+      database,
+    });
     return {
       kind: "ready",
       invoice: toPublicInvoiceDto({ row: data, ...applicationContext() }),
+      payment,
     };
   } catch {
     return unavailableState;

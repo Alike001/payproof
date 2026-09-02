@@ -84,29 +84,11 @@ begin
 end;
 $$;
 
-insert into public.invoices (
-  id,
-  creator_user_id,
-  creator_wallet,
-  freelancer_name,
-  description,
-  currency,
-  amount_minor,
-  recipient_wallet,
-  due_date
-) values (
-  '13000000-0000-4000-8000-000000000003',
-  '10000000-0000-4000-8000-000000000001',
-  '0x1111111111111111111111111111111111111111',
-  'Creator One',
-  'Valid owner insert',
-  'NGN',
-  25000000,
-  '0x1111111111111111111111111111111111111111',
-  '2026-09-07'
-);
-
 reset role;
+
+-- Isolate the transactional budget proof from legitimate same-day live calls.
+-- The surrounding rollback restores every persisted Telegraph record.
+delete from public.telegraph_calls;
 
 do $$
 declare
@@ -261,7 +243,9 @@ select * from public.finalize_verified_payment(
   '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
   '0x1111111111111111111111111111111111111111',
   125500000,
-  'success'
+  'success',
+  now(),
+  'Truvian receipt-derived facts'
 );
 
 do $$

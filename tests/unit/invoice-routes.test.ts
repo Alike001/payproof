@@ -11,7 +11,7 @@ vi.mock("@/features/invoices/invoice-service.server", () => ({
 }));
 
 import { POST as publishPost } from "@/app/api/invoices/route";
-import { POST as cancelPost } from "@/app/api/invoices/[invoiceId]/cancel/route";
+import { POST as cancelPost } from "@/app/api/invoices/[invoiceRef]/cancel/route";
 
 const invoiceItem = {
   invoiceId: "11111111-1111-4111-8111-111111111111",
@@ -101,7 +101,7 @@ describe("invoice Route Handlers", () => {
       new Request(`https://payproof.example/api/invoices/${invoiceId}/cancel`, {
         method: "POST",
       }),
-      { params: Promise.resolve({ invoiceId }) },
+      { params: Promise.resolve({ invoiceRef: invoiceId }) },
     );
     expect(service.cancelCreatorInvoice).toHaveBeenCalledWith(invoiceId);
     expect(response.status).toBe(409);
@@ -113,7 +113,7 @@ describe("invoice Route Handlers", () => {
       new Request("https://payproof.example/api/invoices/bad/cancel", {
         method: "POST",
       }),
-      { params: Promise.resolve({ invoiceId: "bad" }) },
+      { params: Promise.resolve({ invoiceRef: "bad" }) },
     );
     expect(response.status).toBe(503);
     const body = await response.text();

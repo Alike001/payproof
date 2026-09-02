@@ -7,7 +7,7 @@ const emptyInputSchema = z.strictObject({});
 
 export async function POST(
   request: Request,
-  context: { params: Promise<{ publicId: string }> },
+  context: { params: Promise<{ invoiceRef: string }> },
 ) {
   const requestId = crypto.randomUUID();
   let body: unknown;
@@ -29,7 +29,7 @@ export async function POST(
     );
   }
 
-  const { publicId } = await context.params;
+  const { invoiceRef: publicId } = await context.params;
   try {
     const result = await requestInvoiceQuote(publicId, request.headers);
     const status = result.ok

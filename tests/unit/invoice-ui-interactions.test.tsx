@@ -16,6 +16,7 @@ let originalShareDescriptor: PropertyDescriptor | undefined;
 
 const sampleReadyState: PublicInvoicePageState = {
   kind: "ready",
+  payment: null,
   invoice: {
     publicId: "pub_123",
     publicUrl: "https://payproof.example/i/pub_123",

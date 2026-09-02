@@ -21,7 +21,7 @@ const transferSchema = z.object({
 });
 
 const resultSchema = z.object({
-  source: z.string().min(1),
+  source: z.string().min(1).max(200),
   confidence: z.number().min(0).max(1),
   chain: z.string(),
   chainId: z.number().int(),

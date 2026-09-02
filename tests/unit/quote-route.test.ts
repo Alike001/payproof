@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const service = vi.hoisted(() => ({ requestInvoiceQuote: vi.fn() }));
 vi.mock("@/features/quotes/quote-service.server", () => service);
 
-import { POST } from "@/app/api/invoices/[publicId]/quote/route";
+import { POST } from "@/app/api/invoices/[invoiceRef]/quote/route";
 
 const publicId = "11111111-1111-4111-8111-111111111111";
 
@@ -16,7 +16,7 @@ describe("quote Route Handler", () => {
         method: "POST",
         body: JSON.stringify({ rate: "invented" }),
       }),
-      { params: Promise.resolve({ publicId }) },
+      { params: Promise.resolve({ invoiceRef: publicId }) },
     );
     expect(response.status).toBe(400);
     expect(service.requestInvoiceQuote).not.toHaveBeenCalled();
@@ -33,7 +33,7 @@ describe("quote Route Handler", () => {
       { method: "POST", body: "{}" },
     );
     const response = await POST(request, {
-      params: Promise.resolve({ publicId }),
+      params: Promise.resolve({ invoiceRef: publicId }),
     });
     expect(response.status).toBe(200);
     expect(service.requestInvoiceQuote).toHaveBeenCalledWith(
@@ -61,7 +61,7 @@ describe("quote Route Handler", () => {
         method: "POST",
         body: "{}",
       }),
-      { params: Promise.resolve({ publicId }) },
+      { params: Promise.resolve({ invoiceRef: publicId }) },
     );
     expect(response.status).toBe(429);
     expect(response.headers.get("retry-after")).toBe("12");

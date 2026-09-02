@@ -84,6 +84,8 @@ export type Database = {
           submitted_by_wallet: string
           tx_hash: string
           verification_call_id: string | null
+          verification_observed_at: string | null
+          verification_source: string | null
           verified_at: string | null
           verified_transfer_sender: string | null
         }
@@ -104,6 +106,8 @@ export type Database = {
           submitted_by_wallet: string
           tx_hash: string
           verification_call_id?: string | null
+          verification_observed_at?: string | null
+          verification_source?: string | null
           verified_at?: string | null
           verified_transfer_sender?: string | null
         }
@@ -124,6 +128,8 @@ export type Database = {
           submitted_by_wallet?: string
           tx_hash?: string
           verification_call_id?: string | null
+          verification_observed_at?: string | null
+          verification_source?: string | null
           verified_at?: string | null
           verified_transfer_sender?: string | null
         }
@@ -372,6 +378,18 @@ export type Database = {
           retry_after_seconds: number
         }[]
       }
+      consume_verification_rate_limit: {
+        Args: {
+          p_limit?: number
+          p_network_hash: string
+          p_payment_id: string
+          p_window_seconds?: number
+        }
+        Returns: {
+          allowed: boolean
+          retry_after_seconds: number
+        }[]
+      }
       finalize_verified_payment: {
         Args: {
           p_observed_amount_units: number
@@ -381,6 +399,8 @@ export type Database = {
           p_observed_tx_status: string
           p_payment_id: string
           p_verification_call_id: string
+          p_verification_observed_at: string
+          p_verification_source: string
           p_verified_transfer_sender: string
         }
         Returns: {
@@ -407,6 +427,27 @@ export type Database = {
           source_observed_at: string
           telegraph_call_id: string
           usdc_amount_units_text: string
+        }[]
+      }
+      record_payment_verification_result: {
+        Args: {
+          p_code: string
+          p_details: Json
+          p_observed_amount_units: number
+          p_observed_chain_id: number
+          p_observed_recipient: string
+          p_observed_token: string
+          p_observed_tx_status: string
+          p_payment_id: string
+          p_state: string
+          p_verification_call_id: string
+          p_verification_observed_at: string
+          p_verification_source: string
+        }
+        Returns: {
+          invoice_id: string
+          outcome: string
+          payment_id: string
         }[]
       }
       reserve_telegraph_spend: {
