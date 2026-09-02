@@ -242,6 +242,7 @@ export function PublicInvoicePayment({
   const quoteTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const cooldownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastMilestoneAnnouncedRef = useRef<number | null>(null);
+  const initialQuoteRequestForRef = useRef<string | null>(null);
 
   useEffect(
     () => () => {
@@ -260,12 +261,14 @@ export function PublicInvoicePayment({
     ) {
       return;
     }
+    if (initialQuoteRequestForRef.current === invoice.publicId) {
+      return;
+    }
+    initialQuoteRequestForRef.current = invoice.publicId;
 
-    let active = true;
     async function fetchInitialQuote() {
       try {
         const result = await onFetchQuote(invoice.publicId);
-        if (!active) return;
         if (result.ok) {
           setQuote(result.quote);
           const expMs = new Date(result.quote.expiresAt).getTime();
@@ -282,7 +285,6 @@ export function PublicInvoicePayment({
           }
         }
       } catch {
-        if (!active) return;
         setQuoteError(
           "A trustworthy quote is temporarily unavailable. Payment remains paused.",
         );
@@ -290,16 +292,11 @@ export function PublicInvoicePayment({
           "A trustworthy quote is temporarily unavailable. Payment remains paused.",
         );
       } finally {
-        if (active) {
-          setQuoteLoading(false);
-        }
+        setQuoteLoading(false);
       }
     }
 
     fetchInitialQuote();
-    return () => {
-      active = false;
-    };
   }, [initialPayment, invoice.publicId, invoice.status, onFetchQuote]);
 
   // Refresh quote on demand

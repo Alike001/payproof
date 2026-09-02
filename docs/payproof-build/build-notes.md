@@ -680,3 +680,28 @@ is claimed until Abu routes this checkpoint through the agreed PR process.
   Sepolia test-USDC transfer, immediate hash-persistence proof, one exact live
   Telegraph verification to Verified, one wrong-amount live Mismatch, explorer
   inspection, and Abu's Review Gate 3 walkthrough.
+
+## 2026-09-02 — Live item 8 pre-sign inspection and wallet-choice regression
+
+- Recorded the second public progress update:
+  `https://x.com/IamAlikeX/status/2095262512153346204?s=20`.
+- Abu created the real local NGN 50.00 invoice at public ID
+  `2566f7c0-3833-4498-9b93-2a739e603d1e`. It remains Open with no payment
+  record. The selected live quote requires exactly 37,520 official test-USDC
+  base units (`0.037520` test USDC) and expires after 15 minutes.
+- Rendered QA reproduced duplicate-looking browser-wallet buttons. Wagmi's
+  default EIP-6963 discovery was adding installed providers beside PayProof's
+  explicit generic injected connector. Disabled that redundant discovery;
+  desktop QA now shows exactly one browser-wallet choice and one WalletConnect
+  choice.
+- The same QA run exposed two concurrent initial quote requests under React's
+  development effect check. They produced separate primary and backup paid
+  calls and two quote rows one millisecond apart. Added a component-level
+  initial-request guard and prevented action-level/possibly-paid Telegraph
+  transport failures from triggering a backup purchase. Valid/invalid Miner
+  evidence and genuinely unpaid primary unavailability can still use backup.
+- Regression coverage proves the initial quote is requested once under
+  `StrictMode`, EIP-6963 discovery remains disabled, and an unsafe primary
+  failure does not call backup. A fresh rendered visit reused the selected
+  `0.037520` quote without adding any quote or Telegraph-call rows. No wallet
+  was connected and no payment transaction was sent during inspection.

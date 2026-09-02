@@ -38,6 +38,10 @@ export function getWalletConfig() {
   walletConfig ??= createConfig({
     chains: [baseSepolia],
     connectors,
+    // We deliberately expose one generic browser-wallet choice above. Without
+    // this, Wagmi also adds every EIP-6963 wallet it discovers as another
+    // connector, which renders duplicate-looking connect buttons.
+    multiInjectedProviderDiscovery: false,
     transports: {
       [baseSepolia.id]: http(),
     },

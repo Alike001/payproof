@@ -1,4 +1,4 @@
-import { act } from "react";
+import { act, StrictMode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PublicInvoicePayment } from "@/features/payments/public-invoice-payment";
@@ -175,6 +175,28 @@ afterEach(() => {
 });
 
 describe("PublicInvoicePayment Component", () => {
+  it("requests the initial paid quote only once when React checks effects twice", async () => {
+    const fetchQuoteMock = vi.fn().mockResolvedValue({
+      ok: true,
+      quote: sampleQuoteNgn,
+      reused: false,
+    } as QuoteRequestResult);
+
+    await act(async () => {
+      root?.render(
+        <StrictMode>
+          <PublicInvoicePayment
+            invoice={sampleInvoiceNgn}
+            onFetchQuote={fetchQuoteMock}
+          />
+        </StrictMode>,
+      );
+    });
+
+    expect(fetchQuoteMock).toHaveBeenCalledTimes(1);
+    expect(container?.textContent).toContain("500.000000 test USDC");
+  });
+
   it("renders quote ready state with complete intelligence details and countdown", async () => {
     const fetchQuoteMock = vi.fn().mockResolvedValue({
       ok: true,

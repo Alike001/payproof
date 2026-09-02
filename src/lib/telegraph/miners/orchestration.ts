@@ -33,6 +33,7 @@ function failure(
 export async function runPrimaryBackup<T>(input: {
   primary: () => Promise<T>;
   backup: () => Promise<T>;
+  shouldTryBackup?: (error: unknown) => boolean;
 }): Promise<MinerSelectionResult<T>> {
   const failures: MinerAttemptFailure[] = [];
   try {
@@ -44,6 +45,9 @@ export async function runPrimaryBackup<T>(input: {
     };
   } catch (error) {
     failures.push(failure("primary", error));
+    if (input.shouldTryBackup && !input.shouldTryBackup(error)) {
+      return { available: false, failures };
+    }
   }
 
   try {

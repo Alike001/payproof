@@ -2,6 +2,7 @@ import "server-only";
 import { getServerEnv } from "@/lib/env.server";
 import { safeErrorMessage } from "@/lib/telegraph/redaction";
 import { askTelegraphMiner } from "@/lib/telegraph/x402-client.server";
+import { TelegraphTransportError } from "@/lib/telegraph/transport";
 import { markTelegraphCallInvalid } from "@/lib/telegraph/store.server";
 import { MinerAdapterError } from "@/lib/telegraph/miners/common";
 import { parseFxRateMirror } from "@/lib/telegraph/miners/fx-rate-mirror";
@@ -26,6 +27,14 @@ const PREFLIGHT_ID = "20260828";
 const TRUVIAN_ID = "8453";
 const INTERLOCK_ID = "9007";
 const TRANSACTION_EVIDENCE_MAX_AGE_MS = 5 * 60 * 1_000;
+
+function shouldTryBackup(error: unknown): boolean {
+  if (!(error instanceof TelegraphTransportError)) return true;
+
+  // These failures are action-level or may happen after a payment was signed.
+  // Paying a different Miner would not be a safe availability fallback.
+  return error.code === "PAYMENT_REQUIRED_MISSING";
+}
 
 async function parsePaidResult<T extends object>(input: {
   call: () => ReturnType<typeof askTelegraphMiner>;
@@ -115,6 +124,7 @@ export async function requestFxEvidence(input: {
   >({
     primary: () => attempt("primary", primaryMinerId),
     backup: () => attempt("backup", backupMinerId),
+    shouldTryBackup,
   });
   return result;
 }
@@ -186,6 +196,7 @@ export async function requestTransactionEvidence(input: {
   >({
     primary: () => attempt("primary", primaryMinerId),
     backup: () => attempt("backup", backupMinerId),
+    shouldTryBackup,
   });
   return result;
 }

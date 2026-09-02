@@ -304,4 +304,30 @@ describe("Miner request and fallback contracts", () => {
       failures: [{ role: "primary" }, { role: "backup" }],
     });
   });
+
+  it("does not call backup when the caller marks a primary failure as unsafe to retry", async () => {
+    const duplicate = Object.assign(new Error("already reserved"), {
+      code: "DUPLICATE_ACTION",
+    });
+    const backup = vi.fn().mockResolvedValue({ rateToUsd: "1.2" });
+
+    const result = await runPrimaryBackup({
+      primary: async () => {
+        throw duplicate;
+      },
+      backup,
+      shouldTryBackup: (error) =>
+        !(
+          error instanceof Error &&
+          "code" in error &&
+          error.code === "DUPLICATE_ACTION"
+        ),
+    });
+
+    expect(result).toMatchObject({
+      available: false,
+      failures: [{ role: "primary", code: "DUPLICATE_ACTION" }],
+    });
+    expect(backup).not.toHaveBeenCalled();
+  });
 });
