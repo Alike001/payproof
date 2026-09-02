@@ -17,7 +17,11 @@ export function AppProviders({
   const [config] = useState(getWalletConfig);
 
   return (
-    <WagmiProvider config={config} initialState={initialState}>
+    <WagmiProvider
+      config={config}
+      initialState={initialState}
+      reconnectOnMount={false}
+    >
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider coolMode modalSize="compact">
           {children}

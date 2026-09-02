@@ -748,3 +748,20 @@ is claimed until Abu routes this checkpoint through the agreed PR process.
 - Checklist item 8 is complete. Item 9 now has its required real exact-payment
   proof but remains open until a separate real wrong-amount transfer produces
   Mismatch and that hash is independently inspected.
+
+## 2026-09-02 — Public invoice wallet reconnect regression
+
+- Opening a public invoice after a previous wallet session could let Wagmi's
+  default mount-time reconnect attempt invoke the remembered connector before
+  the visitor clicked a wallet action. Public invoice links must remain passive,
+  so the application provider now disables automatic reconnect on mount.
+- A provider regression test asserts that `reconnectOnMount` remains disabled.
+  The full quality check passed: warning-free lint, strict TypeScript, 184 unit
+  and integration tests, and the optimized production build.
+- Fresh rendered QA opened invoice `97ffb400-5cab-455c-be5b-558b19cd8a57`,
+  waited through live quote loading, and found no browser dialog, wallet modal,
+  console error, or failed request. The two explicit wallet choices appeared
+  only as buttons awaiting a user click.
+- Database timestamps are stored in UTC for consistent evidence. Nigeria uses
+  WAT (UTC+1), while user-facing receipt times are formatted in the visitor's
+  browser timezone; the one-hour display difference is expected.
