@@ -592,4 +592,443 @@ describe("PublicInvoicePayment Component", () => {
     );
     expect(container?.textContent).not.toContain("Confirm Payment Transaction");
   });
+
+  it("renders complete permanent verified receipt with non-editable facts and Telegraph provenance", async () => {
+    const verifiedPayment: PublicPaymentResultDto = {
+      paymentId: "77777777-7777-4777-8777-777777777777",
+      quoteId: sampleQuoteNgn.quoteId,
+      state: "verified",
+      code: null,
+      message:
+        "Telegraph evidence matches the exact Base Sepolia test-USDC payment.",
+      retryable: false,
+      transaction: {
+        hash: `0x${"a".repeat(64)}`,
+        explorerUrl: `https://sepolia.basescan.org/tx/0x${"a".repeat(64)}`,
+        submittedByWallet: "0xAbcdefABcDEfAbCdefabcdeFABcDEFabCDEfABCD",
+        submittedAt: "2026-09-02T12:05:00.000Z",
+      },
+      expected: {
+        chainId: BASE_SEPOLIA_CHAIN_ID,
+        network: "Base Sepolia",
+        token: "USDC",
+        tokenAddress: BASE_SEPOLIA_USDC_ADDRESS,
+        recipientAddress: sampleInvoiceNgn.recipientAddress,
+        usdcAmountUnits: "500000000",
+        usdcAmountFormatted: "500.000000",
+      },
+      observed: {
+        chainId: "84532",
+        tokenAddress: BASE_SEPOLIA_USDC_ADDRESS,
+        recipientAddress: sampleInvoiceNgn.recipientAddress,
+        amountUnits: "500000000",
+        amountFormatted: "500.000000",
+        transactionStatus: "success",
+      },
+      evidence: {
+        minerId: "miner-ngn-1",
+        minerName: "Truvian FX Engine",
+        attemptRole: "primary",
+        observedAt: "2026-09-02T12:06:00.000Z",
+        checkedAt: "2026-09-02T12:06:05.000Z",
+        source: "Truvian settlement check v1.0",
+      },
+      receipt: {
+        payerAddress: "0xAbcdefABcDEfAbCdefabcdeFABcDEFabCDEfABCD",
+        verifiedAt: "2026-09-02T12:06:05.000Z",
+      },
+    };
+
+    const fetchQuoteMock = vi.fn();
+
+    await act(async () => {
+      root?.render(
+        <PublicInvoicePayment
+          invoice={sampleInvoiceNgn}
+          initialPayment={verifiedPayment}
+          onFetchQuote={fetchQuoteMock}
+        />,
+      );
+    });
+
+    // Does not fetch a quote
+    expect(fetchQuoteMock).not.toHaveBeenCalled();
+
+    // Contains Verified language and styling
+    expect(container?.textContent).toContain("Telegraph Verified Receipt");
+    expect(container?.textContent).toContain("Verified Receipt");
+
+    // Contains invoice facts
+    expect(container?.textContent).toContain(sampleInvoiceNgn.reference);
+    expect(container?.textContent).toContain(sampleInvoiceNgn.freelancerName);
+    expect(container?.textContent).toContain(sampleInvoiceNgn.clientReference!);
+    expect(container?.textContent).toContain(sampleInvoiceNgn.description);
+    expect(container?.textContent).toContain(
+      sampleInvoiceNgn.localAmountFormatted,
+    );
+    expect(container?.textContent).toContain(sampleInvoiceNgn.dueDate);
+
+    // Contains settlement facts
+    expect(container?.textContent).toContain("500.000000 test USDC");
+    expect(container?.textContent).toContain(
+      verifiedPayment.receipt!.payerAddress,
+    );
+    expect(container?.textContent).toContain(sampleInvoiceNgn.recipientAddress);
+    expect(container?.textContent).toContain(verifiedPayment.transaction.hash);
+    expect(container?.textContent).toContain("View on BaseScan Explorer ↗");
+
+    // Contains Telegraph intelligence provenance
+    expect(container?.textContent).toContain("Truvian FX Engine");
+    expect(container?.textContent).toContain("miner-ngn-1");
+    expect(container?.textContent).toContain("Primary Miner");
+    expect(container?.textContent).toContain("Truvian settlement check v1.0");
+
+    // Contains legal / scope notice
+    expect(container?.textContent).toContain(
+      "PayProof verifies payment facts only — NOT work delivery, identity, tax, quality, or disputes.",
+    );
+
+    // Action buttons
+    expect(container?.textContent).toContain("Print / Save PDF");
+    expect(container?.textContent).toContain("Share receipt");
+    expect(container?.textContent).toContain("Copy receipt link");
+  });
+
+  it("handles receipt print, share, and copy interactions safely", async () => {
+    const verifiedPayment: PublicPaymentResultDto = {
+      paymentId: "77777777-7777-4777-8777-777777777777",
+      quoteId: sampleQuoteNgn.quoteId,
+      state: "verified",
+      code: null,
+      message:
+        "Telegraph evidence matches the exact Base Sepolia test-USDC payment.",
+      retryable: false,
+      transaction: {
+        hash: `0x${"a".repeat(64)}`,
+        explorerUrl: `https://sepolia.basescan.org/tx/0x${"a".repeat(64)}`,
+        submittedByWallet: "0xAbcdefABcDEfAbCdefabcdeFABcDEFabCDEfABCD",
+        submittedAt: "2026-09-02T12:05:00.000Z",
+      },
+      expected: {
+        chainId: BASE_SEPOLIA_CHAIN_ID,
+        network: "Base Sepolia",
+        token: "USDC",
+        tokenAddress: BASE_SEPOLIA_USDC_ADDRESS,
+        recipientAddress: sampleInvoiceNgn.recipientAddress,
+        usdcAmountUnits: "500000000",
+        usdcAmountFormatted: "500.000000",
+      },
+      observed: {
+        chainId: "84532",
+        tokenAddress: BASE_SEPOLIA_USDC_ADDRESS,
+        recipientAddress: sampleInvoiceNgn.recipientAddress,
+        amountUnits: "500000000",
+        amountFormatted: "500.000000",
+        transactionStatus: "success",
+      },
+      evidence: {
+        minerId: "miner-ngn-1",
+        minerName: "Truvian FX Engine",
+        attemptRole: "primary",
+        observedAt: "2026-09-02T12:06:00.000Z",
+        checkedAt: "2026-09-02T12:06:05.000Z",
+        source: "Truvian settlement check v1.0",
+      },
+      receipt: {
+        payerAddress: "0xAbcdefABcDEfAbCdefabcdeFABcDEFabCDEfABCD",
+        verifiedAt: "2026-09-02T12:06:05.000Z",
+      },
+    };
+
+    const printSpy = vi.spyOn(window, "print").mockImplementation(() => {});
+    const writeTextMock = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, {
+      clipboard: { writeText: writeTextMock },
+    });
+
+    await act(async () => {
+      root?.render(
+        <PublicInvoicePayment
+          invoice={sampleInvoiceNgn}
+          initialPayment={verifiedPayment}
+        />,
+      );
+    });
+
+    // Test Print
+    const printBtn = Array.from(
+      container?.querySelectorAll("button") || [],
+    ).find((b) => b.textContent?.includes("Print / Save PDF"));
+    await act(async () => {
+      printBtn?.click();
+    });
+    expect(printSpy).toHaveBeenCalledTimes(1);
+
+    // Test Copy link
+    const copyBtn = Array.from(
+      container?.querySelectorAll("button") || [],
+    ).find((b) => b.textContent?.includes("Copy receipt link"));
+    await act(async () => {
+      copyBtn?.click();
+    });
+    expect(writeTextMock).toHaveBeenCalledWith(sampleInvoiceNgn.publicUrl);
+    expect(container?.textContent).toContain("Receipt link copied to clipboard!");
+
+    printSpy.mockRestore();
+  });
+
+  it("renders payment mismatch with failed requirement and comparison table", async () => {
+    const mismatchPayment: PublicPaymentResultDto = {
+      paymentId: "88888888-8888-4888-8888-888888888888",
+      quoteId: sampleQuoteNgn.quoteId,
+      state: "mismatch",
+      code: "WRONG_AMOUNT",
+      message:
+        "The official test-USDC transfer amount does not exactly match the locked quote.",
+      retryable: false,
+      transaction: {
+        hash: `0x${"b".repeat(64)}`,
+        explorerUrl: `https://sepolia.basescan.org/tx/0x${"b".repeat(64)}`,
+        submittedByWallet: "0xAbcdefABcDEfAbCdefabcdeFABcDEFabCDEfABCD",
+        submittedAt: "2026-09-02T12:05:00.000Z",
+      },
+      expected: {
+        chainId: BASE_SEPOLIA_CHAIN_ID,
+        network: "Base Sepolia",
+        token: "USDC",
+        tokenAddress: BASE_SEPOLIA_USDC_ADDRESS,
+        recipientAddress: sampleInvoiceNgn.recipientAddress,
+        usdcAmountUnits: "500000000",
+        usdcAmountFormatted: "500.000000",
+      },
+      observed: {
+        chainId: "84532",
+        tokenAddress: BASE_SEPOLIA_USDC_ADDRESS,
+        recipientAddress: sampleInvoiceNgn.recipientAddress,
+        amountUnits: "400000000",
+        amountFormatted: "400.000000",
+        transactionStatus: "success",
+      },
+      evidence: {
+        minerId: "miner-ngn-1",
+        minerName: "Truvian FX Engine",
+        attemptRole: "primary",
+        observedAt: "2026-09-02T12:06:00.000Z",
+        checkedAt: "2026-09-02T12:06:05.000Z",
+        source: "Truvian settlement check v1.0",
+      },
+      receipt: null,
+    };
+
+    const fetchQuoteMock = vi.fn().mockResolvedValue({
+      ok: true,
+      quote: sampleQuoteNgn,
+      reused: false,
+    });
+
+    await act(async () => {
+      root?.render(
+        <PublicInvoicePayment
+          invoice={sampleInvoiceNgn}
+          initialPayment={mismatchPayment}
+          onFetchQuote={fetchQuoteMock}
+        />,
+      );
+    });
+
+    // Does NOT say Verified
+    expect(container?.textContent).not.toContain("Telegraph Verified Receipt");
+    expect(container?.textContent).toContain("Payment Mismatch Detected");
+    expect(container?.textContent).toContain("Payment Mismatch");
+
+    // Identifies the failed requirement clearly
+    expect(container?.textContent).toContain(
+      "Payment Amount Mismatch — Expected 500.000000 test USDC, observed 400.000000 test USDC.",
+    );
+
+    // Displays comparison table
+    expect(container?.textContent).toContain("Payment Fact");
+    expect(container?.textContent).toContain("Invoice Expectation");
+    expect(container?.textContent).toContain("Observed on Base Sepolia");
+    expect(container?.textContent).toContain("Mismatch ✗");
+
+    // Provides action to pay again
+    const tryAgainBtn = Array.from(
+      container?.querySelectorAll("button") || [],
+    ).find((b) => b.textContent?.includes("Pay this invoice again"));
+    expect(tryAgainBtn).toBeDefined();
+
+    await act(async () => {
+      tryAgainBtn?.click();
+    });
+
+    // Returns to quote flow
+    expect(fetchQuoteMock).toHaveBeenCalled();
+  });
+
+  it("renders verification unavailable state and allows retrying verification", async () => {
+    const unavailablePayment: PublicPaymentResultDto = {
+      paymentId: "99999999-9999-4999-8999-999999999999",
+      quoteId: sampleQuoteNgn.quoteId,
+      state: "unavailable",
+      code: "VERIFICATION_UNAVAILABLE",
+      message:
+        "Trustworthy Telegraph evidence is temporarily unavailable. The saved hash can be retried.",
+      retryable: true,
+      retryAfterSeconds: 0,
+      transaction: {
+        hash: `0x${"d".repeat(64)}`,
+        explorerUrl: `https://sepolia.basescan.org/tx/0x${"d".repeat(64)}`,
+        submittedByWallet: "0xAbcdefABcDEfAbCdefabcdeFABcDEFabCDEfABCD",
+        submittedAt: "2026-09-02T12:05:00.000Z",
+      },
+      expected: {
+        chainId: BASE_SEPOLIA_CHAIN_ID,
+        network: "Base Sepolia",
+        token: "USDC",
+        tokenAddress: BASE_SEPOLIA_USDC_ADDRESS,
+        recipientAddress: sampleInvoiceNgn.recipientAddress,
+        usdcAmountUnits: "500000000",
+        usdcAmountFormatted: "500.000000",
+      },
+      observed: {
+        chainId: null,
+        tokenAddress: null,
+        recipientAddress: null,
+        amountUnits: null,
+        amountFormatted: null,
+        transactionStatus: null,
+      },
+      evidence: null,
+      receipt: null,
+    };
+
+    const verifyMock = vi.fn().mockResolvedValue({
+      ok: true,
+      saved: true,
+      result: {
+        ...unavailablePayment,
+        state: "verified",
+        code: null,
+        receipt: {
+          payerAddress: "0xAbcdefABcDEfAbCdefabcdeFABcDEFabCDEfABCD",
+          verifiedAt: "2026-09-02T12:10:00.000Z",
+        },
+        evidence: {
+          minerId: "miner-ngn-1",
+          minerName: "Truvian FX Engine",
+          attemptRole: "primary",
+          observedAt: "2026-09-02T12:09:00.000Z",
+          checkedAt: "2026-09-02T12:10:00.000Z",
+          source: "Truvian settlement check v1.0",
+        },
+      },
+    });
+
+    await act(async () => {
+      root?.render(
+        <PublicInvoicePayment
+          invoice={sampleInvoiceNgn}
+          initialPayment={unavailablePayment}
+          onVerifyPayment={verifyMock}
+        />,
+      );
+    });
+
+    expect(container?.textContent).toContain(
+      "Verification Temporarily Unavailable",
+    );
+    expect(container?.textContent).toContain(
+      "The transaction hash has been safely recorded",
+    );
+    expect(container?.textContent).toContain(
+      unavailablePayment.transaction.hash,
+    );
+
+    const retryBtn = Array.from(
+      container?.querySelectorAll("button") || [],
+    ).find((b) => b.textContent?.includes("Retry verification"));
+    expect(retryBtn).toBeDefined();
+
+    await act(async () => {
+      retryBtn?.click();
+    });
+
+    expect(verifyMock).toHaveBeenCalledWith(
+      sampleInvoiceNgn.publicId,
+      unavailablePayment.paymentId,
+    );
+
+    // Transitions to verified
+    expect(container?.textContent).toContain("Telegraph Verified Receipt");
+  });
+
+  it("allows checking verification from submitted state and transitions to verified receipt", async () => {
+    const verifyMock = vi.fn().mockResolvedValue({
+      ok: true,
+      saved: true,
+      result: {
+        paymentId: recoveredSubmittedPayment.paymentId,
+        quoteId: recoveredSubmittedPayment.quoteId,
+        state: "verified",
+        code: null,
+        message:
+          "Telegraph evidence matches the exact Base Sepolia test-USDC payment.",
+        retryable: false,
+        transaction: recoveredSubmittedPayment.transaction,
+        expected: recoveredSubmittedPayment.expected,
+        observed: {
+          chainId: "84532",
+          tokenAddress: BASE_SEPOLIA_USDC_ADDRESS,
+          recipientAddress: sampleInvoiceNgn.recipientAddress,
+          amountUnits: "500000000",
+          amountFormatted: "500.000000",
+          transactionStatus: "success",
+        },
+        evidence: {
+          minerId: "miner-ngn-1",
+          minerName: "Truvian FX Engine",
+          attemptRole: "primary",
+          observedAt: "2026-09-02T12:06:00.000Z",
+          checkedAt: "2026-09-02T12:06:05.000Z",
+          source: "Truvian settlement check v1.0",
+        },
+        receipt: {
+          payerAddress: "0xAbcdefABcDEfAbCdefabcdeFABcDEFabCDEfABCD",
+          verifiedAt: "2026-09-02T12:06:05.000Z",
+        },
+      },
+    });
+
+    await act(async () => {
+      root?.render(
+        <PublicInvoicePayment
+          invoice={sampleInvoiceNgn}
+          initialPayment={recoveredSubmittedPayment}
+          onVerifyPayment={verifyMock}
+        />,
+      );
+    });
+
+    expect(container?.textContent).toContain("Payment Broadcast");
+    expect(container?.textContent).toContain("Transaction hash saved");
+
+    const checkBtn = Array.from(
+      container?.querySelectorAll("button") || [],
+    ).find((b) => b.textContent?.includes("Check verification status"));
+    expect(checkBtn).toBeDefined();
+
+    await act(async () => {
+      checkBtn?.click();
+    });
+
+    expect(verifyMock).toHaveBeenCalledWith(
+      sampleInvoiceNgn.publicId,
+      recoveredSubmittedPayment.paymentId,
+    );
+
+    // Transitions to Verified Receipt
+    expect(container?.textContent).toContain("Telegraph Verified Receipt");
+    expect(container?.textContent).toContain("✓ Verified Receipt");
+  });
 });

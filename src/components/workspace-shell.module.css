@@ -28,3 +28,22 @@
 @media (max-width: 360px) {
   .header, .main { width: calc(100% - 16px); }
 }
+
+@media print {
+  .testnetNotice,
+  .header,
+  .intro,
+  .homeLink {
+    display: none !important;
+  }
+  .page {
+    background: #ffffff !important;
+    min-height: auto !important;
+  }
+  .main {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+}

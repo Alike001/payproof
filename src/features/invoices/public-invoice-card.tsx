@@ -264,7 +264,10 @@ export function PublicInvoiceCard({
         ) : null}
       </div>
 
-      {invoice.status === "open" || invoice.status === "overdue" ? (
+      {invoice.status === "open" ||
+      invoice.status === "overdue" ||
+      invoice.status === "verified" ||
+      state.payment !== null ? (
         <PublicInvoicePayment
           invoice={invoice}
           initialPayment={state.payment}
