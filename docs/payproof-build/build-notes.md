@@ -765,3 +765,30 @@ is claimed until Abu routes this checkpoint through the agreed PR process.
 - Database timestamps are stored in UTC for consistent evidence. Nigeria uses
   WAT (UTC+1), while user-facing receipt times are formatted in the visitor's
   browser timezone; the one-hour display difference is expected.
+
+## 2026-09-03 — Item 9 real wrong-amount rejection complete
+
+- Abu deliberately sent transaction
+  `0x950db3d257bcd3e084ccedd2659e80a45cd87e2f52ab2a795e224d712cf0f5af`
+  on Base Sepolia to test the exact-payment guard. Independent JSON-RPC receipt
+  inspection showed successful status, the official test-USDC contract, payer
+  `0xdE67A35B322e5A31e8215B5245CA4e48d7977F71`, recipient
+  `0x67FEF9A8e7054b6d8c50453bA1A55d7812A54d12`, and Transfer data `0x927b`
+  (37,499 base units).
+- PayProof saved payment `c7792ba5-afc8-4c17-83ef-01af35b36692` against the
+  locked quote requiring 37,500 base units before starting verification.
+  Truvian Exact On-Chain Truth Engine Miner `8453` returned normalized evidence;
+  the exact verifier persisted terminal `WRONG_AMOUNT` Mismatch, left the invoice
+  open for a correct retry, and did not issue a receipt.
+- The paid `ONCHAIN_TX_LOOKUP` call was recorded as primary `paid_success` on
+  `eip155:84532`, cost 10,000 test-USDC base units, and stored x402 settlement
+  transaction
+  `0x58ad4aa33120fb411decc680a03b1b52e1f2d71fcb825c96be18863d71b07660`.
+- Fresh-browser QA recovered the mismatch from the same public URL, showed the
+  expected `0.037500` versus observed `0.037499` comparison, displayed Miner and
+  explorer provenance, issued no verified receipt, opened no wallet modal, and
+  reported no console errors or failed requests. The evidence screenshot is
+  saved outside the repository at
+  `/home/ali/Desktop/payproof-live-wrong-amount-mismatch.png`.
+- Item 9 is complete. Review Gate 3 is now active: Abu must review the exact and
+  mismatch evidence plus the 30-second product story before item 10 begins.
