@@ -656,3 +656,27 @@ is claimed until Abu routes this checkpoint through the agreed PR process.
   cases skipped, warning-free ESLint, strict TypeScript, the clean optimized
   build, and two production-server browser projects. All disposable rows were
   removed and the six earlier real paid-success call records remain present.
+
+## 2026-09-02 — Teammate receipt UI merge and visual QA
+
+- Reviewed and merged teammate PR #15 for Submitted, Unavailable, Mismatch, and
+  permanent Verified receipt presentation. Review fixes keep cancelled invoices
+  terminal, update the page-level status immediately after verification, honor
+  server-supplied verification cooldowns, show verification errors visibly,
+  and prevent missing observed facts from appearing as successful matches.
+- Regression coverage now proves the cancelled/payment precedence, live header
+  transition, pending cooldown, missing-evidence comparison, receipt actions,
+  and all four payment-result states. The merged GitHub quality, database, and
+  secret-scanning checks passed.
+- Captured six post-merge screenshots from disposable local database fixtures:
+  desktop Verified, wrong-amount Mismatch, Verification unavailable, print,
+  390px mobile Verified, and successful copy feedback. The browser reported no
+  console errors or horizontal overflow, and every disposable invoice, quote,
+  payment, Telegraph-call row, usage event, and auth user was removed.
+- Attached the screenshots to PR #15 with an explicit fixture-only label. They
+  demonstrate rendering and recovery UX only; they are not presented as real
+  Base Sepolia, Telegraph Miner volume, or user-adoption evidence.
+- Items 8 and 9 remain open. Completion still requires a small real Base
+  Sepolia test-USDC transfer, immediate hash-persistence proof, one exact live
+  Telegraph verification to Verified, one wrong-amount live Mismatch, explorer
+  inspection, and Abu's Review Gate 3 walkthrough.
