@@ -474,3 +474,10 @@ is claimed until Abu routes this checkpoint through the agreed PR process.
   warning-free ESLint, and the Next.js production build. Item 6 remains open
   until the teammate supplies the required browser-journey and responsive QA
   evidence against these locked contracts.
+- Added the Playwright browser-test baseline in a separate shared tooling slice.
+  `npm run test:e2e` builds the production application, starts it on an isolated
+  local port, and runs serial desktop/mobile projects. This Linux host crashes
+  Chromium when Playwright launches it through a debugging pipe, so the reusable
+  test helper starts system Chrome with an isolated disposable profile and uses
+  Playwright's supported CDP connection. Both initial fail-closed public-route
+  smoke tests pass, and the helper removes its profile after every run.

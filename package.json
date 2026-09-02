@@ -11,6 +11,8 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "start:e2e": "next start --hostname 127.0.0.1 --port 3100",
+    "test:e2e": "npm run build && playwright test",
     "test:live:telegraph": "RUN_LIVE_TELEGRAPH_TESTS=1 vitest run tests/live/telegraph-miners.live.test.ts",
     "supabase:start": "supabase start",
     "db:start": "supabase db start",
@@ -37,6 +39,7 @@
     "zod": "4.5.4"
   },
   "devDependencies": {
+    "@playwright/test": "1.61.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
