@@ -104,7 +104,7 @@ delay the live quote, transfer, verification, and receipt path.
 
   **Review gate 2:** Pause and show Abu the paid x402 proof, Miner identities, normalized FX/transaction evidence, costs, primary/backup behavior, and one honest failure. Do not proceed if the live transaction adapters cannot prove an exact Base Sepolia USDC transfer.
 
-- [ ] **6. [Lead + teammate] Deliver invoice creation, public links, history, sharing, cancellation, and duplication**
+- [x] **6. [Lead + teammate] Deliver invoice creation, public links, history, sharing, cancellation, and duplication**
   Spec ref: `spec.md > Components And Responsibilities > Invoice service`; `spec.md > API Contracts > POST /api/invoices`; `prd.md > Epic 3: Create and share an invoice`; `prd.md > Epic 8: Manage creator history`
   What to build: The lead implements authenticated publication, immutable storage, sanitized public reads, owner history, cancel, and duplicate-prefill services/routes. The teammate builds the create/review form, public invoice detail, empty/history states, status badges, copy/native-share actions, privacy warning, overdue label, and responsive layouts against the accepted DTOs.
   Acceptance: A signed creator can publish and share an unguessable invoice in any supported currency; anyone with its link can view only public fields; creator history returns after reconnecting; published details cannot be edited; open invoices can be cancelled or duplicated; overdue remains payable; verified invoices cannot be cancelled.

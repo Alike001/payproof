@@ -46,6 +46,17 @@ async function cleanupDisposableData(
   const failures: Error[] = [];
 
   if (data.invoiceIds.length > 0) {
+    const { error: usageEventError } = await admin
+      .from("usage_events")
+      .delete()
+      .in("invoice_id", data.invoiceIds);
+
+    if (usageEventError) {
+      failures.push(
+        new Error(`Could not delete E2E usage events: ${usageEventError.message}`),
+      );
+    }
+
     const { data: deletedRows, error } = await admin
       .from("invoices")
       .delete()
@@ -195,6 +206,8 @@ async function expectNoHorizontalOverflow(page: Page) {
 test("Item 6 public invoice browser journey and responsive proof", async ({
   baseURL,
 }, testInfo) => {
+  test.setTimeout(60_000);
+
   const viewport =
     testInfo.project.name === "mobile-chrome"
       ? { width: 390, height: 844 }

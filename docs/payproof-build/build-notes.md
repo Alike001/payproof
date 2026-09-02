@@ -482,6 +482,28 @@ is claimed until Abu routes this checkpoint through the agreed PR process.
   Playwright's supported CDP connection. Both initial fail-closed public-route
   smoke tests pass, and the helper removes its profile after every run.
 
+## 2026-09-02 — Checklist item 6 completion
+
+- Merged teammate invoice-creator, public-invoice, interaction, and browser-
+  journey work now covers the complete create, review, publish, share, public
+  read, owner history, duplicate-prefill, cancellation, overdue, and responsive
+  presentation required by item 6.
+- The post-merge browser run exposed a test-cleanup regression after the quote UI
+  began recording invoice-linked usage events. Cleanup now removes those child
+  test events before deleting disposable invoices, and the journey has a
+  60-second budget that includes fixture teardown.
+- Removed only the failed run's two generated test users, six generated invoices,
+  and two linked test usage events. No real user data or Telegraph settlement
+  evidence was touched.
+- Focused verification passed 35 invoice unit/UI tests, two real local-database
+  service tests, and the complete public-invoice journey in desktop and mobile
+  Chrome. The final project gate passed warning-free lint, strict TypeScript,
+  171 normal tests with 23 opt-in tests skipped, and the optimized Next.js build.
+- Item 6 is complete. Current Next.js 16 guidance confirmed that dynamic Route
+  Handler parameters remain asynchronous and mutation handlers are uncached;
+  current Supabase guidance reconfirmed that the privileged secret bypasses RLS
+  and therefore remains confined to server-only owner-checked services.
+
 ## 2026-09-02 — Item 7 lead quote foundation
 
 - Added a server-only quote service and strict `POST
