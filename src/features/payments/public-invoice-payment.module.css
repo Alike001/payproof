@@ -1053,6 +1053,11 @@
   color: #dc2626;
 }
 
+.cellStatusUnknown {
+  font-weight: 800;
+  color: #64748b;
+}
+
 .mismatchActionsRow {
   display: flex;
   gap: 12px;
@@ -1189,6 +1194,12 @@
 .checkVerifyButton:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.verificationError {
+  margin: 12px 0 0 !important;
+  color: #991b1b !important;
+  font-weight: 700;
 }
 
 /* ============================================================

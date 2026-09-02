@@ -772,7 +772,9 @@ describe("PublicInvoicePayment Component", () => {
       copyBtn?.click();
     });
     expect(writeTextMock).toHaveBeenCalledWith(sampleInvoiceNgn.publicUrl);
-    expect(container?.textContent).toContain("Receipt link copied to clipboard!");
+    expect(container?.textContent).toContain(
+      "Receipt link copied to clipboard!",
+    );
 
     printSpy.mockRestore();
   });
@@ -851,6 +853,46 @@ describe("PublicInvoicePayment Component", () => {
     expect(container?.textContent).toContain("Invoice Expectation");
     expect(container?.textContent).toContain("Observed on Base Sepolia");
     expect(container?.textContent).toContain("Mismatch ✗");
+
+    const transferMissingPayment: PublicPaymentResultDto = {
+      ...mismatchPayment,
+      code: "USDC_TRANSFER_NOT_FOUND",
+      message: "No ERC-20 transfer was found in the transaction.",
+      observed: {
+        chainId: "84532",
+        tokenAddress: null,
+        recipientAddress: null,
+        amountUnits: null,
+        amountFormatted: null,
+        transactionStatus: "success",
+      },
+    };
+
+    await act(async () => {
+      root?.render(
+        <PublicInvoicePayment
+          key="transfer-missing"
+          invoice={sampleInvoiceNgn}
+          initialPayment={transferMissingPayment}
+          onFetchQuote={fetchQuoteMock}
+        />,
+      );
+    });
+
+    const comparisonRows = Array.from(
+      container?.querySelectorAll("tbody tr") ?? [],
+    );
+    for (const fact of [
+      "Token Contract",
+      "Recipient Address",
+      "Payment Amount",
+    ]) {
+      const row = comparisonRows.find((candidate) =>
+        candidate.textContent?.includes(fact),
+      );
+      expect(row?.textContent).toContain("Not observed —");
+      expect(row?.textContent).not.toContain("Match ✓");
+    }
 
     // Provides action to pay again
     const tryAgainBtn = Array.from(
@@ -1030,5 +1072,40 @@ describe("PublicInvoicePayment Component", () => {
     // Transitions to Verified Receipt
     expect(container?.textContent).toContain("Telegraph Verified Receipt");
     expect(container?.textContent).toContain("✓ Verified Receipt");
+  });
+
+  it("honors the server-supplied cooldown after a pending verification result", async () => {
+    const verifyMock = vi.fn().mockResolvedValue({
+      ok: true,
+      saved: true,
+      result: {
+        ...recoveredSubmittedPayment,
+        retryAfterSeconds: 4,
+      },
+    });
+
+    await act(async () => {
+      root?.render(
+        <PublicInvoicePayment
+          invoice={sampleInvoiceNgn}
+          initialPayment={recoveredSubmittedPayment}
+          onVerifyPayment={verifyMock}
+        />,
+      );
+    });
+
+    const checkButton = Array.from(
+      container?.querySelectorAll("button") ?? [],
+    ).find((button) =>
+      button.textContent?.includes("Check verification status"),
+    );
+    await act(async () => checkButton?.click());
+
+    const cooldownButton = Array.from(
+      container?.querySelectorAll("button") ?? [],
+    ).find((button) => button.textContent?.includes("Check again in 4s"));
+    expect(cooldownButton).toBeDefined();
+    expect(cooldownButton?.disabled).toBe(true);
+    expect(verifyMock).toHaveBeenCalledTimes(1);
   });
 });

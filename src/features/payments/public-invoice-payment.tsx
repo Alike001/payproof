@@ -84,13 +84,44 @@ function explorerUrl(txHash: string): string {
   return `${baseSepolia.blockExplorers.default.url.replace(/\/$/, "")}/tx/${txHash}`;
 }
 
+type ComparisonStatus = "match" | "mismatch" | "unknown";
+
+function exactComparisonStatus(
+  observed: string | null,
+  expected: string,
+  caseInsensitive = false,
+): ComparisonStatus {
+  if (observed === null) return "unknown";
+  const observedValue = caseInsensitive ? observed.toLowerCase() : observed;
+  const expectedValue = caseInsensitive ? expected.toLowerCase() : expected;
+  return observedValue === expectedValue ? "match" : "mismatch";
+}
+
+function ComparisonStatusCell({ status }: { status: ComparisonStatus }) {
+  const content =
+    status === "match"
+      ? "Match ✓"
+      : status === "mismatch"
+        ? "Mismatch ✗"
+        : "Not observed —";
+
+  return (
+    <td
+      className={
+        status === "match"
+          ? styles.cellStatusMatch
+          : status === "mismatch"
+            ? styles.cellStatusMismatch
+            : styles.cellStatusUnknown
+      }
+    >
+      {content}
+    </td>
+  );
+}
+
 type PaymentFlowStep =
-  | "quote"
-  | "review"
-  | "submitted"
-  | "unavailable"
-  | "mismatch"
-  | "verified";
+  "quote" | "review" | "submitted" | "unavailable" | "mismatch" | "verified";
 
 type BroadcastState = {
   paymentId?: string;
@@ -150,6 +181,7 @@ export function PublicInvoicePayment({
   onSavePayment = savePaymentAttempt,
   onVerifyPayment = requestPaymentVerification,
   onWriteContract,
+  onVerified,
 }: {
   invoice: PublicInvoiceDto;
   initialPayment?: PublicPaymentResultDto | null;
@@ -163,6 +195,7 @@ export function PublicInvoicePayment({
     paymentId: string,
   ) => Promise<PaymentVerificationResult>;
   onWriteContract?: (request: UsdcTransferRequest) => Promise<`0x${string}`>;
+  onVerified?: () => void;
 }) {
   const baseId = useId();
   const { address, chainId, isConnected } = useAccount();
@@ -177,7 +210,9 @@ export function PublicInvoicePayment({
   );
   const [quoteRefreshing, setQuoteRefreshing] = useState(false);
   const [quoteError, setQuoteError] = useState<string | null>(null);
-  const [cooldownSeconds, setCooldownSeconds] = useState<number | null>(null);
+  const [cooldownSeconds, setCooldownSeconds] = useState<number | null>(
+    initialPayment?.retryAfterSeconds ?? null,
+  );
 
   const [secondsRemaining, setSecondsRemaining] = useState<number>(0);
   const [step, setStep] = useState<PaymentFlowStep>(
@@ -207,6 +242,15 @@ export function PublicInvoicePayment({
   const quoteTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const cooldownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastMilestoneAnnouncedRef = useRef<number | null>(null);
+
+  useEffect(
+    () => () => {
+      if (receiptFeedbackTimer.current) {
+        clearTimeout(receiptFeedbackTimer.current);
+      }
+    },
+    [],
+  );
 
   // Fetch initial quote on mount / publicId change
   useEffect(() => {
@@ -515,8 +559,10 @@ export function PublicInvoicePayment({
       const result = await onVerifyPayment(invoice.publicId, paymentId);
       if (result.ok) {
         setPaymentResult(result.result);
+        setCooldownSeconds(result.result.retryAfterSeconds ?? null);
         if (result.result.state === "verified") {
           setStep("verified");
+          onVerified?.();
           setStatusAnnouncement(
             "Payment verified by Telegraph intelligence! Verified receipt is ready.",
           );
@@ -526,9 +572,6 @@ export function PublicInvoicePayment({
         } else if (result.result.state === "unavailable") {
           setStep("unavailable");
           setStatusAnnouncement(result.result.message);
-          if (result.result.retryAfterSeconds) {
-            setCooldownSeconds(result.result.retryAfterSeconds);
-          }
         } else if (result.result.state === "submitted") {
           setStep("submitted");
           setStatusAnnouncement(result.result.message);
@@ -630,7 +673,7 @@ export function PublicInvoicePayment({
   return (
     <section
       className={styles.paymentContainer}
-      aria-labelledby="payment-section-title"
+      aria-label="Invoice payment and verification"
     >
       <div
         className={styles.srOnly}
@@ -678,7 +721,9 @@ export function PublicInvoicePayment({
             </div>
 
             <div className={styles.receiptFactItem}>
-              <span className={styles.receiptFactLabel}>Freelancer / Payee</span>
+              <span className={styles.receiptFactLabel}>
+                Freelancer / Payee
+              </span>
               <span className={styles.receiptFactValue}>
                 {invoice.freelancerName}
               </span>
@@ -686,7 +731,9 @@ export function PublicInvoicePayment({
 
             {invoice.clientReference ? (
               <div className={styles.receiptFactItem}>
-                <span className={styles.receiptFactLabel}>Client Reference</span>
+                <span className={styles.receiptFactLabel}>
+                  Client Reference
+                </span>
                 <span className={styles.receiptFactValue}>
                   {invoice.clientReference}
                 </span>
@@ -875,8 +922,8 @@ export function PublicInvoicePayment({
           </div>
 
           <div className={styles.receiptDisclaimer}>
-            <strong>Scope notice:</strong> PayProof verifies payment facts only —
-            NOT work delivery, identity, tax, quality, or disputes.
+            <strong>Scope notice:</strong> PayProof verifies payment facts only
+            — NOT work delivery, identity, tax, quality, or disputes.
           </div>
         </div>
       ) : step === "mismatch" && paymentResult ? (
@@ -944,24 +991,21 @@ export function PublicInvoicePayment({
                       ? `Chain ID ${paymentResult.observed.chainId}`
                       : "Not detected"}
                   </td>
-                  <td
-                    className={
-                      paymentResult.code === "WRONG_CHAIN"
-                        ? styles.cellStatusMismatch
-                        : styles.cellStatusMatch
-                    }
-                  >
-                    {paymentResult.code === "WRONG_CHAIN"
-                      ? "Mismatch ✗"
-                      : "Match ✓"}
-                  </td>
+                  <ComparisonStatusCell
+                    status={exactComparisonStatus(
+                      paymentResult.observed.chainId,
+                      String(paymentResult.expected.chainId),
+                    )}
+                  />
                 </tr>
                 <tr>
                   <td>
                     <strong>Token Contract</strong>
                   </td>
                   <td>
-                    <code>{shortAddress(paymentResult.expected.tokenAddress)}</code>
+                    <code>
+                      {shortAddress(paymentResult.expected.tokenAddress)}
+                    </code>
                   </td>
                   <td>
                     <code>
@@ -970,17 +1014,13 @@ export function PublicInvoicePayment({
                         : "None detected"}
                     </code>
                   </td>
-                  <td
-                    className={
-                      paymentResult.code === "WRONG_TOKEN"
-                        ? styles.cellStatusMismatch
-                        : styles.cellStatusMatch
-                    }
-                  >
-                    {paymentResult.code === "WRONG_TOKEN"
-                      ? "Mismatch ✗"
-                      : "Match ✓"}
-                  </td>
+                  <ComparisonStatusCell
+                    status={exactComparisonStatus(
+                      paymentResult.observed.tokenAddress,
+                      paymentResult.expected.tokenAddress,
+                      true,
+                    )}
+                  />
                 </tr>
                 <tr>
                   <td>
@@ -998,17 +1038,13 @@ export function PublicInvoicePayment({
                         : "None detected"}
                     </code>
                   </td>
-                  <td
-                    className={
-                      paymentResult.code === "WRONG_RECIPIENT"
-                        ? styles.cellStatusMismatch
-                        : styles.cellStatusMatch
-                    }
-                  >
-                    {paymentResult.code === "WRONG_RECIPIENT"
-                      ? "Mismatch ✗"
-                      : "Match ✓"}
-                  </td>
+                  <ComparisonStatusCell
+                    status={exactComparisonStatus(
+                      paymentResult.observed.recipientAddress,
+                      paymentResult.expected.recipientAddress,
+                      true,
+                    )}
+                  />
                 </tr>
                 <tr>
                   <td>
@@ -1024,35 +1060,28 @@ export function PublicInvoicePayment({
                       ? `${paymentResult.observed.amountFormatted} test USDC`
                       : "None detected"}
                   </td>
-                  <td
-                    className={
-                      paymentResult.code === "WRONG_AMOUNT"
-                        ? styles.cellStatusMismatch
-                        : styles.cellStatusMatch
-                    }
-                  >
-                    {paymentResult.code === "WRONG_AMOUNT"
-                      ? "Mismatch ✗"
-                      : "Match ✓"}
-                  </td>
+                  <ComparisonStatusCell
+                    status={exactComparisonStatus(
+                      paymentResult.observed.amountUnits,
+                      paymentResult.expected.usdcAmountUnits,
+                    )}
+                  />
                 </tr>
                 <tr>
                   <td>
                     <strong>Transaction Status</strong>
                   </td>
                   <td>Mined & Succeeded</td>
-                  <td>{paymentResult.observed.transactionStatus ?? "Unknown"}</td>
-                  <td
-                    className={
-                      paymentResult.code === "TRANSACTION_REVERTED"
-                        ? styles.cellStatusMismatch
-                        : styles.cellStatusMatch
-                    }
-                  >
-                    {paymentResult.code === "TRANSACTION_REVERTED"
-                      ? "Reverted ✗"
-                      : "Success ✓"}
+                  <td>
+                    {paymentResult.observed.transactionStatus ?? "Unknown"}
                   </td>
+                  <ComparisonStatusCell
+                    status={exactComparisonStatus(
+                      paymentResult.observed.transactionStatus,
+                      "success",
+                      true,
+                    )}
+                  />
                 </tr>
               </tbody>
             </table>
@@ -1210,7 +1239,9 @@ export function PublicInvoicePayment({
             onClick={handleCheckVerification}
             type="button"
           >
-            {isVerifying ? "Checking Telegraph evidence…" : "Retry verification"}
+            {isVerifying
+              ? "Checking Telegraph evidence…"
+              : "Retry verification"}
           </button>
         </div>
       ) : step === "submitted" && (broadcast || paymentResult) ? (
@@ -1287,16 +1318,27 @@ export function PublicInvoicePayment({
                 </p>
               ) : null}
 
+              {verificationError ? (
+                <p className={styles.verificationError} role="alert">
+                  {verificationError}
+                </p>
+              ) : null}
+
               <button
                 className={styles.checkVerifyButton}
-                disabled={isVerifying}
+                disabled={
+                  isVerifying ||
+                  (cooldownSeconds !== null && cooldownSeconds > 0)
+                }
                 aria-busy={isVerifying}
                 onClick={handleCheckVerification}
                 type="button"
               >
                 {isVerifying
                   ? "Checking Telegraph evidence…"
-                  : "Check verification status"}
+                  : cooldownSeconds !== null && cooldownSeconds > 0
+                    ? `Check again in ${cooldownSeconds}s`
+                    : "Check verification status"}
               </button>
             </div>
           ) : (
@@ -1435,7 +1477,9 @@ export function PublicInvoicePayment({
                   </div>
                   <div className={styles.quoteMetaItem}>
                     <span>Expires At</span>
-                    <span>{new Date(quote.expiresAt).toLocaleTimeString()}</span>
+                    <span>
+                      {new Date(quote.expiresAt).toLocaleTimeString()}
+                    </span>
                   </div>
                 </div>
 
