@@ -499,6 +499,21 @@
   margin-bottom: 18px;
 }
 
+.submittedCardUnsaved {
+  background: #fff7ed;
+  border-color: #fed7aa;
+}
+
+.submittedCardUnsaved .submittedBadge {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.submittedCardUnsaved h4,
+.submittedCardUnsaved p {
+  color: #9a3412;
+}
+
 .submittedBadge {
   display: inline-flex;
   align-items: center;
@@ -561,6 +576,34 @@
   font-size: 0.82rem;
   color: #166534;
   line-height: 1.5;
+}
+
+.unsavedActions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.unsavedMessage {
+  margin: 0;
+  color: #9a3412 !important;
+}
+
+.retrySaveButton {
+  min-height: 40px;
+  border: 1px solid #c2410c;
+  border-radius: 10px;
+  background: #c2410c;
+  color: #ffffff;
+  padding: 0 16px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.retrySaveButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .payActionRow {

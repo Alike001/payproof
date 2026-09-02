@@ -1,32 +1,25 @@
 "use client";
 
 import { ConnectButton } from "@rainbow-me/rainbowkit/components";
-import { QueryClient, QueryClientContext, QueryClientProvider } from "@tanstack/react-query";
 import {
   useCallback,
-  useContext,
   useEffect,
   useId,
   useMemo,
   useRef,
   useState,
 } from "react";
-import {
-  useAccount,
-  useConnect,
-  useSwitchChain,
-  useWriteContract,
-  WagmiContext,
-  WagmiProvider,
-} from "wagmi";
+import { useAccount, useSwitchChain, useWriteContract } from "wagmi";
 import { baseSepolia } from "wagmi/chains";
-import { getWalletConfig } from "@/lib/wallet/config";
 import { requestQuote } from "@/features/quotes/quote-client-boundary";
-import type { PublicQuoteDto, QuoteRequestResult } from "@/features/quotes/types";
+import type {
+  PublicQuoteDto,
+  QuoteRequestResult,
+} from "@/features/quotes/types";
 import { savePaymentAttempt } from "@/features/payments/payment-client-boundary";
 import type {
   PaymentSubmissionResult,
-  PublicPaymentAttemptDto,
+  PublicPaymentResultDto,
   SubmitPaymentInput,
 } from "@/features/payments/types";
 import {
@@ -52,75 +45,85 @@ function formatCountdown(secondsRemaining: number): string {
   return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
 }
 
+function quoteRequiresReview(
+  previous: PublicQuoteDto,
+  next: PublicQuoteDto,
+): boolean {
+  return (
+    previous.quoteId !== next.quoteId ||
+    previous.rateToUsd !== next.rateToUsd ||
+    previous.usdcAmountUnits !== next.usdcAmountUnits ||
+    previous.expiresAt !== next.expiresAt
+  );
+}
+
+function walletTransactionError(error: unknown): string {
+  if (
+    typeof error === "object" &&
+    error &&
+    "code" in error &&
+    error.code === 4001
+  ) {
+    return "Transaction cancelled in wallet. No test USDC was sent.";
+  }
+  if (
+    error instanceof Error &&
+    /reject|denied|cancel|user rejected/i.test(error.message)
+  ) {
+    return "Transaction cancelled in wallet. No test USDC was sent.";
+  }
+  if (error instanceof Error && /insufficient funds|gas/i.test(error.message)) {
+    return "Your wallet needs Base Sepolia test ETH for gas and enough test USDC for this payment.";
+  }
+  return "The wallet did not broadcast the payment. No transaction hash was saved. Check your wallet and try again.";
+}
+
+function explorerUrl(txHash: string): string {
+  return `${baseSepolia.blockExplorers.default.url.replace(/\/$/, "")}/tx/${txHash}`;
+}
+
 type PaymentFlowStep = "quote" | "review" | "submitted";
+
+type BroadcastState = {
+  quoteId: string;
+  txHash: `0x${string}`;
+  submittedByWallet: `0x${string}`;
+  explorerUrl: string;
+  saved: boolean;
+  saveError: string | null;
+  verificationUnavailable: boolean;
+};
+
+function blocksAnotherTransfer(
+  payment: PublicPaymentResultDto | null | undefined,
+) {
+  return payment?.state === "submitted" || payment?.state === "unavailable";
+}
+
+function broadcastFromPayment(
+  payment: PublicPaymentResultDto | null | undefined,
+): BroadcastState | null {
+  if (!blocksAnotherTransfer(payment) || !payment) return null;
+  return {
+    quoteId: payment.quoteId,
+    txHash: payment.transaction.hash as `0x${string}`,
+    submittedByWallet: payment.transaction.submittedByWallet as `0x${string}`,
+    explorerUrl: payment.transaction.explorerUrl,
+    saved: true,
+    saveError: null,
+    verificationUnavailable: payment.state === "unavailable",
+  };
+}
 
 export function PublicInvoicePayment({
   invoice,
+  initialPayment = null,
   onFetchQuote = requestQuote,
   onSavePayment = savePaymentAttempt,
   onWriteContract,
 }: {
   invoice: PublicInvoiceDto;
-  onFetchQuote?: (publicId: string) => Promise<QuoteRequestResult>;
-  onSavePayment?: (
-    publicId: string,
-    input: SubmitPaymentInput,
-  ) => Promise<PaymentSubmissionResult>;
-  onWriteContract?: (request: UsdcTransferRequest) => Promise<`0x${string}`>;
-}) {
-  const queryClient = useContext(QueryClientContext);
-  const wagmiCtx = useContext(WagmiContext);
-
-  // If rendered in an isolated test without providers, self-wrap so hooks don't throw
-  if (!queryClient || !wagmiCtx) {
-    return (
-      <IsolatedPaymentWrapper
-        invoice={invoice}
-        onFetchQuote={onFetchQuote}
-        onSavePayment={onSavePayment}
-        onWriteContract={onWriteContract}
-      />
-    );
-  }
-
-  return (
-    <PublicInvoicePaymentInner
-      invoice={invoice}
-      onFetchQuote={onFetchQuote}
-      onSavePayment={onSavePayment}
-      onWriteContract={onWriteContract}
-    />
-  );
-}
-
-function IsolatedPaymentWrapper(props: {
-  invoice: PublicInvoiceDto;
-  onFetchQuote?: (publicId: string) => Promise<QuoteRequestResult>;
-  onSavePayment?: (
-    publicId: string,
-    input: SubmitPaymentInput,
-  ) => Promise<PaymentSubmissionResult>;
-  onWriteContract?: (request: UsdcTransferRequest) => Promise<`0x${string}`>;
-}) {
-  const [queryClient] = useState(() => new QueryClient());
-  const [config] = useState(getWalletConfig);
-
-  return (
-    <WagmiProvider config={config}>
-      <QueryClientProvider client={queryClient}>
-        <PublicInvoicePaymentInner {...props} />
-      </QueryClientProvider>
-    </WagmiProvider>
-  );
-}
-
-function PublicInvoicePaymentInner({
-  invoice,
-  onFetchQuote = requestQuote,
-  onSavePayment = savePaymentAttempt,
-  onWriteContract,
-}: {
-  invoice: PublicInvoiceDto;
+  initialPayment?: PublicPaymentResultDto | null;
   onFetchQuote?: (publicId: string) => Promise<QuoteRequestResult>;
   onSavePayment?: (
     publicId: string,
@@ -130,22 +133,27 @@ function PublicInvoicePaymentInner({
 }) {
   const baseId = useId();
   const { address, chainId, isConnected } = useAccount();
-  const { connectAsync, connectors, isPending: isConnecting } = useConnect();
   const { switchChainAsync } = useSwitchChain();
   const { writeContractAsync } = useWriteContract();
 
+  const initialBroadcast = broadcastFromPayment(initialPayment);
+
   const [quote, setQuote] = useState<PublicQuoteDto | null>(null);
-  const [quoteLoading, setQuoteLoading] = useState(true);
+  const [quoteLoading, setQuoteLoading] = useState(!initialBroadcast);
   const [quoteRefreshing, setQuoteRefreshing] = useState(false);
   const [quoteError, setQuoteError] = useState<string | null>(null);
   const [cooldownSeconds, setCooldownSeconds] = useState<number | null>(null);
 
   const [secondsRemaining, setSecondsRemaining] = useState<number>(0);
-  const [step, setStep] = useState<PaymentFlowStep>("quote");
+  const [step, setStep] = useState<PaymentFlowStep>(
+    initialBroadcast ? "submitted" : "quote",
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
-  const [submittedPayment, setSubmittedPayment] =
-    useState<PublicPaymentAttemptDto | null>(null);
+  const [networkError, setNetworkError] = useState<string | null>(null);
+  const [broadcast, setBroadcast] = useState<BroadcastState | null>(
+    initialBroadcast,
+  );
   const [statusAnnouncement, setStatusAnnouncement] = useState<string>("");
 
   const quoteTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -154,6 +162,10 @@ function PublicInvoicePaymentInner({
 
   // Fetch initial quote on mount / publicId change
   useEffect(() => {
+    if (blocksAnotherTransfer(initialPayment)) {
+      return;
+    }
+
     let active = true;
     async function fetchInitialQuote() {
       try {
@@ -193,7 +205,7 @@ function PublicInvoicePaymentInner({
     return () => {
       active = false;
     };
-  }, [invoice.publicId, onFetchQuote]);
+  }, [initialPayment, invoice.publicId, onFetchQuote]);
 
   // Refresh quote on demand
   const handleRefreshQuote = useCallback(async () => {
@@ -204,7 +216,7 @@ function PublicInvoicePaymentInner({
     try {
       const result = await onFetchQuote(invoice.publicId);
       if (result.ok) {
-        if (quote && quote.quoteId !== result.quote.quoteId) {
+        if (quote && quoteRequiresReview(quote, result.quote)) {
           setStep("quote");
           setStatusAnnouncement(
             `Quote updated. New rate: ${result.quote.usdcAmountFormatted} test USDC. Please review the updated quote.`,
@@ -323,79 +335,116 @@ function PublicInvoicePaymentInner({
     );
   }
 
+  async function handleSwitchNetwork() {
+    setNetworkError(null);
+    try {
+      await switchChainAsync({ chainId: baseSepolia.id });
+    } catch {
+      setNetworkError(
+        "Network switch was not completed. Choose Base Sepolia in your wallet and try again.",
+      );
+    }
+  }
+
+  async function saveBroadcast(record: BroadcastState) {
+    try {
+      const result = await onSavePayment(invoice.publicId, {
+        quoteId: record.quoteId,
+        txHash: record.txHash,
+        submittedByWallet: record.submittedByWallet,
+      });
+
+      if (result.ok) {
+        setBroadcast({
+          ...record,
+          explorerUrl: explorerUrl(result.payment.txHash),
+          saved: true,
+          saveError: null,
+        });
+        setStatusAnnouncement(
+          "Payment transaction hash saved. Telegraph verification can now check it.",
+        );
+        return;
+      }
+
+      setBroadcast({ ...record, saveError: result.message });
+      setStatusAnnouncement(
+        "The payment may have been broadcast, but its transaction hash is not yet saved. Do not pay again.",
+      );
+    } catch {
+      setBroadcast({
+        ...record,
+        saveError:
+          "PayProof could not save the transaction hash. Do not pay again; retry saving this hash.",
+      });
+      setStatusAnnouncement(
+        "The payment may have been broadcast, but its transaction hash is not yet saved. Do not pay again.",
+      );
+    }
+  }
+
   async function handleConfirmPayment() {
     if (!quote || isExpired || !transferRequest) {
-      setPaymentError("The quote expired before payment. Please refresh the quote.");
+      setPaymentError(
+        "The quote expired before payment. Please refresh the quote.",
+      );
       setStep("quote");
       return;
     }
 
+    if (quoteRefreshing) {
+      setPaymentError(
+        "Wait for the refreshed quote, then review its exact amount again.",
+      );
+      return;
+    }
+
     if (!address || isWrongNetwork) {
-      setPaymentError("Please connect your wallet to Base Sepolia before confirming.");
+      setPaymentError(
+        "Please connect your wallet to Base Sepolia before confirming.",
+      );
       return;
     }
 
     setIsSubmitting(true);
     setPaymentError(null);
 
+    let txHash: `0x${string}`;
     try {
-      // 1. Send transaction to wallet
       const writeFn = onWriteContract ?? writeContractAsync;
-      const txHash = await writeFn(transferRequest);
-
-      // 2. IMMEDIATE SAVE: Save broadcast attempt immediately after hash is returned
-      const saveRes = await onSavePayment(invoice.publicId, {
-        quoteId: quote.quoteId,
-        txHash,
-        submittedByWallet: address,
-      });
-
-      if (saveRes.ok) {
-        setSubmittedPayment(saveRes.payment);
-        setStep("submitted");
-        setStatusAnnouncement(
-          `Payment submitted! Transaction hash: ${txHash}. Verification by Telegraph intelligence is in progress.`,
-        );
-      } else {
-        setPaymentError(
-          `${saveRes.message} Transaction Hash: ${txHash}. Save this hash for reference.`,
-        );
-        setSubmittedPayment({
-          paymentId: "pending",
-          quoteId: quote.quoteId,
-          txHash,
-          submittedByWallet: address,
-          state: "submitted",
-          submittedAt: new Date().toISOString(),
-        });
-        setStep("submitted");
-      }
-    } catch (err: unknown) {
-      if (
-        typeof err === "object" &&
-        err &&
-        "code" in err &&
-        (err.code === 4001 || (err as { code: number }).code === 4001)
-      ) {
-        setPaymentError("Transaction cancelled in wallet. No test USDC was sent.");
-        setStatusAnnouncement("Transaction cancelled in wallet. No funds were sent.");
-      } else if (
-        err instanceof Error &&
-        /reject|denied|cancel|user rejected/i.test(err.message)
-      ) {
-        setPaymentError("Transaction cancelled in wallet. No test USDC was sent.");
-        setStatusAnnouncement("Transaction cancelled in wallet. No funds were sent.");
-      } else {
-        const msg =
-          err instanceof Error
-            ? err.message
-            : "Payment transaction failed. Please check your wallet and try again.";
-        setPaymentError(msg);
-        setStatusAnnouncement("Payment transaction failed. Please try again.");
-      }
-    } finally {
+      txHash = await writeFn(transferRequest);
+    } catch (error) {
+      const message = walletTransactionError(error);
+      setPaymentError(message);
+      setStatusAnnouncement(message);
       setIsSubmitting(false);
+      return;
     }
+
+    const record: BroadcastState = {
+      quoteId: quote.quoteId,
+      txHash,
+      submittedByWallet: address,
+      explorerUrl: explorerUrl(txHash),
+      saved: false,
+      saveError: null,
+      verificationUnavailable: false,
+    };
+    setBroadcast(record);
+    setStep("submitted");
+    setStatusAnnouncement(
+      "Payment broadcast. PayProof is saving the transaction hash now.",
+    );
+    await saveBroadcast(record);
+    setIsSubmitting(false);
+  }
+
+  async function handleRetrySave() {
+    if (!broadcast || broadcast.saved || isSubmitting) return;
+    setIsSubmitting(true);
+    setBroadcast({ ...broadcast, saveError: null });
+    await saveBroadcast({ ...broadcast, saveError: null });
+    setIsSubmitting(false);
   }
 
   return (
@@ -414,14 +463,17 @@ function PublicInvoicePaymentInner({
 
       <div className={styles.sectionHeader}>
         <div>
-          <span className={styles.eyebrow}>Step 2 · Currency Conversion & Settlement</span>
+          <span className={styles.eyebrow}>
+            Step 2 · Currency Conversion & Settlement
+          </span>
           <h3 id="payment-section-title">Client Payment Step</h3>
         </div>
         <span className={styles.badgeBase}>Base Sepolia (84532)</span>
       </div>
 
       <p className={styles.disclaimerText}>
-        Pay exact test USDC on Base Sepolia. Telegraph currency intelligence verifies the conversion rate and checks payment integrity.
+        Pay exact test USDC on Base Sepolia. Telegraph currency intelligence
+        verifies the conversion rate and checks payment integrity.
       </p>
 
       {/* Quote Card */}
@@ -439,7 +491,9 @@ function PublicInvoicePaymentInner({
               }`}
               role="status"
             >
-              {isExpired ? "Quote Expired" : `${formatCountdown(secondsRemaining)} remaining`}
+              {isExpired
+                ? "Quote Expired"
+                : `${formatCountdown(secondsRemaining)} remaining`}
             </span>
           )}
         </div>
@@ -451,7 +505,9 @@ function PublicInvoicePaymentInner({
           </div>
         ) : quoteError ? (
           <div className={styles.quoteErrorBox} role="alert">
-            <p><strong>Quote Unavailable:</strong> {quoteError}</p>
+            <p>
+              <strong>Quote Unavailable:</strong> {quoteError}
+            </p>
             {cooldownSeconds !== null ? (
               <p className={styles.cooldownText}>
                 Cooldown active: retry available in {cooldownSeconds}s
@@ -459,7 +515,10 @@ function PublicInvoicePaymentInner({
             ) : null}
             <button
               className={styles.retryButton}
-              disabled={quoteRefreshing || (cooldownSeconds !== null && cooldownSeconds > 0)}
+              disabled={
+                quoteRefreshing ||
+                (cooldownSeconds !== null && cooldownSeconds > 0)
+              }
               onClick={() => handleRefreshQuote()}
               type="button"
             >
@@ -470,13 +529,21 @@ function PublicInvoicePaymentInner({
           <div className={styles.quoteDetails}>
             <div className={styles.quoteRowMain}>
               <div>
-                <span className={styles.quoteLabel}>Original Invoiced Amount</span>
-                <strong className={styles.localAmountText}>{quote.localAmountFormatted}</strong>
+                <span className={styles.quoteLabel}>
+                  Original Invoiced Amount
+                </span>
+                <strong className={styles.localAmountText}>
+                  {quote.localAmountFormatted}
+                </strong>
               </div>
-              <div className={styles.arrowIcon} aria-hidden="true">→</div>
+              <div className={styles.arrowIcon} aria-hidden="true">
+                →
+              </div>
               <div className={styles.usdcCol}>
                 <span className={styles.quoteLabel}>Required Payment</span>
-                <strong className={styles.usdcAmountText}>{quote.usdcAmountFormatted} test USDC</strong>
+                <strong className={styles.usdcAmountText}>
+                  {quote.usdcAmountFormatted} test USDC
+                </strong>
               </div>
             </div>
 
@@ -486,7 +553,7 @@ function PublicInvoicePaymentInner({
                 <strong>
                   {quote.source.kind === "usd_parity"
                     ? "1 USD = 1 test USDC (Nominal testnet parity)"
-                    : `1 USD = ${quote.rateToUsd} ${quote.sourceCurrency}`}
+                    : `1 ${quote.sourceCurrency} = ${quote.rateToUsd} USD`}
                 </strong>
               </div>
               <div className={styles.quoteMetaItem}>
@@ -537,10 +604,13 @@ function PublicInvoicePaymentInner({
 
         {isWrongNetwork ? (
           <div className={styles.networkWarning} role="alert">
-            <span>You are connected to an unsupported network. Switch to Base Sepolia (84532) to pay.</span>
+            <span>
+              You are connected to an unsupported network. Switch to Base
+              Sepolia (84532) to pay.
+            </span>
             <button
               className={styles.switchButton}
-              onClick={() => switchChainAsync({ chainId: baseSepolia.id })}
+              onClick={handleSwitchNetwork}
               type="button"
             >
               Switch to Base Sepolia
@@ -548,40 +618,25 @@ function PublicInvoicePaymentInner({
           </div>
         ) : null}
 
+        {networkError ? (
+          <div className={styles.paymentError} role="alert">
+            {networkError}
+          </div>
+        ) : null}
+
         <div className={styles.walletActions}>
-          {isConnected ? (
-            <ConnectButton
-              accountStatus={{ smallScreen: "avatar", largeScreen: "address" }}
-              chainStatus="icon"
-              showBalance={false}
-            />
-          ) : (
-            connectors.map((connector) => (
-              <button
-                className={styles.secondaryButton}
-                disabled={isConnecting || isSubmitting}
-                key={connector.uid}
-                onClick={async () => {
-                  try {
-                    await connectAsync({ connector });
-                  } catch {
-                    // ignore handled by wagmi
-                  }
-                }}
-                type="button"
-              >
-                {isConnecting
-                  ? "Connecting…"
-                  : connector.id === "walletConnect"
-                    ? "WalletConnect"
-                    : "Connect browser wallet"}
-              </button>
-            ))
-          )}
+          <ConnectButton
+            accountStatus={{ smallScreen: "avatar", largeScreen: "address" }}
+            chainStatus="icon"
+            showBalance={false}
+          />
         </div>
 
         <p className={styles.faucetNotice}>
-          <strong>Testnet Notice:</strong> You need Base Sepolia test ETH for network gas and official test USDC (<code>{shortAddress(BASE_SEPOLIA_USDC_ADDRESS)}</code>). PayProof never sells, swaps, or custodies tokens.
+          <strong>Testnet Notice:</strong> You need Base Sepolia test ETH for
+          network gas and official test USDC (
+          <code>{shortAddress(BASE_SEPOLIA_USDC_ADDRESS)}</code>). PayProof
+          never sells, swaps, or custodies tokens.
         </p>
       </div>
 
@@ -595,14 +650,14 @@ function PublicInvoicePaymentInner({
       {step === "review" && quote && transferRequest ? (
         <div
           className={styles.reviewModal}
-          role="dialog"
-          aria-modal="true"
+          role="region"
           aria-labelledby={`${baseId}-review-title`}
         >
           <div className={styles.reviewContent}>
             <h4 id={`${baseId}-review-title`}>Confirm Payment Transaction</h4>
             <p className={styles.reviewSubtitle}>
-              Please review the exact ERC-20 transfer parameters before approving in your wallet.
+              Please review the exact ERC-20 transfer parameters before
+              approving in your wallet.
             </p>
 
             <div className={styles.reviewSummaryList}>
@@ -614,17 +669,25 @@ function PublicInvoicePaymentInner({
               </div>
               <div className={styles.reviewSummaryRow}>
                 <span>Network</span>
-                <strong>Base Sepolia (Chain ID: {BASE_SEPOLIA_CHAIN_ID})</strong>
+                <strong>
+                  Base Sepolia (Chain ID: {BASE_SEPOLIA_CHAIN_ID})
+                </strong>
               </div>
               <div className={styles.reviewSummaryRow}>
                 <span>Token Contract</span>
-                <strong className={styles.mono} title={BASE_SEPOLIA_USDC_ADDRESS}>
+                <strong
+                  className={styles.mono}
+                  title={BASE_SEPOLIA_USDC_ADDRESS}
+                >
                   {BASE_SEPOLIA_USDC_ADDRESS}
                 </strong>
               </div>
               <div className={styles.reviewSummaryRow}>
                 <span>Recipient (Payee)</span>
-                <strong className={styles.mono} title={invoice.recipientAddress}>
+                <strong
+                  className={styles.mono}
+                  title={invoice.recipientAddress}
+                >
                   {invoice.recipientAddress}
                 </strong>
               </div>
@@ -636,7 +699,10 @@ function PublicInvoicePaymentInner({
               </div>
               <div className={styles.reviewSummaryRow}>
                 <span>Supporting Quote</span>
-                <span>{quote.quoteId.slice(0, 8)}… (Expires in {formatCountdown(secondsRemaining)})</span>
+                <span>
+                  {quote.quoteId.slice(0, 8)}… (Expires in{" "}
+                  {formatCountdown(secondsRemaining)})
+                </span>
               </div>
             </div>
 
@@ -651,7 +717,13 @@ function PublicInvoicePaymentInner({
               </button>
               <button
                 className={styles.confirmPayButton}
-                disabled={isSubmitting || isExpired || isWrongNetwork || !isConnected}
+                disabled={
+                  isSubmitting ||
+                  quoteRefreshing ||
+                  isExpired ||
+                  isWrongNetwork ||
+                  !isConnected
+                }
                 aria-busy={isSubmitting}
                 onClick={handleConfirmPayment}
                 type="button"
@@ -666,24 +738,41 @@ function PublicInvoicePaymentInner({
       ) : null}
 
       {/* Submitted State */}
-      {step === "submitted" && submittedPayment ? (
-        <div className={styles.submittedCard} role="status">
+      {step === "submitted" && broadcast ? (
+        <div
+          className={`${styles.submittedCard} ${
+            broadcast.saved ? "" : styles.submittedCardUnsaved
+          }`}
+          role="status"
+        >
           <div className={styles.submittedBadge}>
-            <span aria-hidden="true">✓</span> Payment Broadcast
+            {broadcast.saved ? (
+              <>
+                <span aria-hidden="true">✓</span> Transaction hash saved
+              </>
+            ) : (
+              "Save needs attention"
+            )}
           </div>
-          <h4>Payment Successfully Broadcast</h4>
+          <h4>
+            {broadcast.saved
+              ? "Payment Broadcast"
+              : "Payment broadcast — hash not saved yet"}
+          </h4>
           <p>
-            Your payment has been sent to the Base Sepolia network. The transaction hash has been recorded.
+            {broadcast.saved
+              ? "PayProof recorded this Base Sepolia transaction hash. Do not send another payment while it is being checked."
+              : "Your wallet returned a transaction hash, but PayProof has not confirmed that it was recorded. Do not pay again. Keep this page open and retry saving the same hash."}
           </p>
 
           <div className={styles.txBox}>
             <span className={styles.txLabel}>Transaction Hash</span>
-            <code className={styles.txHash} title={submittedPayment.txHash}>
-              {submittedPayment.txHash}
+            <code className={styles.txHash} title={broadcast.txHash}>
+              {broadcast.txHash}
             </code>
             <a
               className={styles.explorerLink}
-              href={`https://sepolia.basescan.org/tx/${submittedPayment.txHash}`}
+              href={broadcast.explorerUrl}
               target="_blank"
               rel="noreferrer"
             >
@@ -691,9 +780,36 @@ function PublicInvoicePaymentInner({
             </a>
           </div>
 
-          <div className={styles.verificationNotice}>
-            <strong>Verification in progress:</strong> Telegraph decentralized intelligence will check this transaction against the invoice boundary and produce an immutable verified receipt.
-          </div>
+          {broadcast.saved ? (
+            <div className={styles.verificationNotice}>
+              <strong>
+                {broadcast.verificationUnavailable
+                  ? "Verification temporarily unavailable:"
+                  : "Ready for verification:"}
+              </strong>{" "}
+              {broadcast.verificationUnavailable
+                ? "The hash is safe. Telegraph can retry checking it without another payment."
+                : "Telegraph intelligence must check the transaction before PayProof can issue a verified receipt."}
+            </div>
+          ) : (
+            <div className={styles.unsavedActions}>
+              {broadcast.saveError ? (
+                <p className={styles.unsavedMessage}>{broadcast.saveError}</p>
+              ) : (
+                <p className={styles.unsavedMessage}>
+                  Saving transaction hash…
+                </p>
+              )}
+              <button
+                className={styles.retrySaveButton}
+                disabled={isSubmitting || !broadcast.saveError}
+                onClick={handleRetrySave}
+                type="button"
+              >
+                {isSubmitting ? "Saving hash…" : "Retry saving this hash"}
+              </button>
+            </div>
+          )}
         </div>
       ) : step === "quote" ? (
         <div className={styles.payActionRow}>
@@ -704,6 +820,7 @@ function PublicInvoicePaymentInner({
               quoteLoading ||
               isExpired ||
               Boolean(quoteError) ||
+              quoteRefreshing ||
               !isConnected ||
               isWrongNetwork ||
               isSubmitting
@@ -726,7 +843,9 @@ function PublicInvoicePaymentInner({
 
       <div className={styles.trustBanner}>
         <span>
-          <strong>Non-custodial:</strong> PayProof never holds, swaps, sells, bridges, or supplies funds. Payments are direct ERC-20 transfers on Base Sepolia.
+          <strong>Non-custodial:</strong> PayProof never holds, swaps, sells,
+          bridges, or supplies funds. Payments are direct ERC-20 transfers on
+          Base Sepolia.
         </span>
       </div>
     </section>

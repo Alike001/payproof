@@ -3,9 +3,18 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PublicInvoicePayment } from "@/features/payments/public-invoice-payment";
 import type { PublicInvoiceDto } from "@/features/invoices/types";
-import type { PublicQuoteDto, QuoteRequestResult } from "@/features/quotes/types";
-import type { PaymentSubmissionResult } from "@/features/payments/types";
-import { BASE_SEPOLIA_CHAIN_ID, BASE_SEPOLIA_USDC_ADDRESS } from "@/lib/telegraph/constants";
+import type {
+  PublicQuoteDto,
+  QuoteRequestResult,
+} from "@/features/quotes/types";
+import type {
+  PaymentSubmissionResult,
+  PublicPaymentResultDto,
+} from "@/features/payments/types";
+import {
+  BASE_SEPOLIA_CHAIN_ID,
+  BASE_SEPOLIA_USDC_ADDRESS,
+} from "@/lib/telegraph/constants";
 
 // Mock wagmi hooks with importOriginal
 const mockUseAccount = vi.fn();
@@ -58,7 +67,7 @@ const sampleQuoteNgn: PublicQuoteDto = {
   sourceCurrency: "NGN",
   targetCurrency: "USD",
   localAmountFormatted: "₦750,000.00",
-  rateToUsd: "1500.00",
+  rateToUsd: "0.000666666666666667",
   usdcAmountUnits: "500000000",
   usdcAmountFormatted: "500.000000",
   quotedAt: "2026-09-02T12:00:00.000Z",
@@ -91,6 +100,40 @@ const sampleQuoteUsd: PublicQuoteDto = {
     minerName: null,
     attemptRole: null,
   },
+};
+
+const recoveredSubmittedPayment: PublicPaymentResultDto = {
+  paymentId: "66666666-6666-4666-8666-666666666666",
+  quoteId: sampleQuoteNgn.quoteId,
+  state: "submitted",
+  code: "TRANSACTION_PENDING",
+  message: "The transaction is still pending on Base Sepolia.",
+  retryable: true,
+  transaction: {
+    hash: `0x${"c".repeat(64)}`,
+    explorerUrl: `https://sepolia.basescan.org/tx/0x${"c".repeat(64)}`,
+    submittedByWallet: "0xAbcdefABcDEfAbCdefabcdeFABcDEFabCDEfABCD",
+    submittedAt: "2026-09-02T12:05:00.000Z",
+  },
+  expected: {
+    chainId: BASE_SEPOLIA_CHAIN_ID,
+    network: "Base Sepolia",
+    token: "USDC",
+    tokenAddress: BASE_SEPOLIA_USDC_ADDRESS,
+    recipientAddress: "0x1234567890AbcdEF1234567890aBcdef12345678",
+    usdcAmountUnits: "500000000",
+    usdcAmountFormatted: "500.000000",
+  },
+  observed: {
+    chainId: null,
+    tokenAddress: null,
+    recipientAddress: null,
+    amountUnits: null,
+    amountFormatted: null,
+    transactionStatus: null,
+  },
+  evidence: null,
+  receipt: null,
 };
 
 beforeEach(() => {
@@ -151,8 +194,12 @@ describe("PublicInvoicePayment Component", () => {
     expect(fetchQuoteMock).toHaveBeenCalledWith(sampleInvoiceNgn.publicId);
     expect(container?.textContent).toContain("500.000000 test USDC");
     expect(container?.textContent).toContain("Truvian FX Engine");
-    expect(container?.textContent).toContain("1 USD = 1500.00 NGN");
-    expect(container?.textContent).toContain("Review & Pay 500.000000 test USDC");
+    expect(container?.textContent).toContain(
+      "1 NGN = 0.000666666666666667 USD",
+    );
+    expect(container?.textContent).toContain(
+      "Review & Pay 500.000000 test USDC",
+    );
   });
 
   it("displays honest USD parity semantics for USD invoices", async () => {
@@ -171,7 +218,9 @@ describe("PublicInvoicePayment Component", () => {
       );
     });
 
-    expect(container?.textContent).toContain("1 USD = 1 test USDC (Nominal testnet parity)");
+    expect(container?.textContent).toContain(
+      "1 USD = 1 test USDC (Nominal testnet parity)",
+    );
     expect(container?.textContent).toContain("Nominal 1:1 USD test parity");
   });
 
@@ -179,7 +228,8 @@ describe("PublicInvoicePayment Component", () => {
     const fetchQuoteMock = vi.fn().mockResolvedValue({
       ok: false,
       code: "QUOTE_UNAVAILABLE",
-      message: "A trustworthy quote is temporarily unavailable. Payment remains paused.",
+      message:
+        "A trustworthy quote is temporarily unavailable. Payment remains paused.",
       retryable: true,
       retryAfterSeconds: 10,
     } as QuoteRequestResult);
@@ -195,9 +245,13 @@ describe("PublicInvoicePayment Component", () => {
 
     expect(container?.textContent).toContain("Quote Unavailable");
     expect(container?.textContent).toContain("Payment remains paused");
-    expect(container?.textContent).toContain("Cooldown active: retry available in 10s");
+    expect(container?.textContent).toContain(
+      "Cooldown active: retry available in 10s",
+    );
 
-    const payBtn = container?.querySelector("button[class*='primaryPayButton']") as HTMLButtonElement;
+    const payBtn = container?.querySelector(
+      "button[class*='primaryPayButton']",
+    ) as HTMLButtonElement;
     expect(payBtn?.disabled).toBe(true);
   });
 
@@ -222,7 +276,9 @@ describe("PublicInvoicePayment Component", () => {
     });
 
     expect(container?.textContent).toContain("Quote Expired");
-    const payBtn = container?.querySelector("button[class*='primaryPayButton']") as HTMLButtonElement;
+    const payBtn = container?.querySelector(
+      "button[class*='primaryPayButton']",
+    ) as HTMLButtonElement;
     expect(payBtn?.disabled).toBe(true);
   });
 
@@ -250,17 +306,21 @@ describe("PublicInvoicePayment Component", () => {
       );
     });
 
-    expect(container?.textContent).toContain("unsupported network. Switch to Base Sepolia");
-    const switchBtn = Array.from(container?.querySelectorAll("button") || []).find(
-      (b) => b.textContent?.includes("Switch to Base Sepolia"),
+    expect(container?.textContent).toContain(
+      "unsupported network. Switch to Base Sepolia",
     );
+    const switchBtn = Array.from(
+      container?.querySelectorAll("button") || [],
+    ).find((b) => b.textContent?.includes("Switch to Base Sepolia"));
     expect(switchBtn).toBeDefined();
 
     await act(async () => {
       switchBtn?.click();
     });
 
-    expect(switchChainMock).toHaveBeenCalledWith({ chainId: BASE_SEPOLIA_CHAIN_ID });
+    expect(switchChainMock).toHaveBeenCalledWith({
+      chainId: BASE_SEPOLIA_CHAIN_ID,
+    });
   });
 
   it("opens review dialog showing exact parameters and executes payment with immediate save", async () => {
@@ -273,7 +333,7 @@ describe("PublicInvoicePayment Component", () => {
     const savePaymentMock = vi.fn().mockResolvedValue({
       ok: true,
       payment: {
-        paymentId: "pay_123",
+        paymentId: "55555555-5555-4555-8555-555555555555",
         quoteId: sampleQuoteNgn.quoteId,
         txHash,
         submittedByWallet: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
@@ -296,9 +356,9 @@ describe("PublicInvoicePayment Component", () => {
     });
 
     // 1. Click Review & Pay
-    const reviewBtn = Array.from(container?.querySelectorAll("button") || []).find(
-      (b) => b.textContent?.includes("Review & Pay"),
-    );
+    const reviewBtn = Array.from(
+      container?.querySelectorAll("button") || [],
+    ).find((b) => b.textContent?.includes("Review & Pay"));
     expect(reviewBtn).toBeDefined();
 
     await act(async () => {
@@ -312,9 +372,9 @@ describe("PublicInvoicePayment Component", () => {
     expect(container?.textContent).toContain(sampleInvoiceNgn.recipientAddress);
 
     // 3. Confirm & Pay
-    const confirmBtn = Array.from(container?.querySelectorAll("button") || []).find(
-      (b) => b.textContent?.includes("Confirm & Pay"),
-    );
+    const confirmBtn = Array.from(
+      container?.querySelectorAll("button") || [],
+    ).find((b) => b.textContent?.includes("Confirm & Pay"));
     expect(confirmBtn).toBeDefined();
 
     await act(async () => {
@@ -323,20 +383,26 @@ describe("PublicInvoicePayment Component", () => {
 
     // 4. Verify transaction execution and IMMEDIATE save
     expect(writeContractMock).toHaveBeenCalled();
-    expect(savePaymentMock).toHaveBeenCalledWith(
-      sampleInvoiceNgn.publicId,
-      {
-        quoteId: sampleQuoteNgn.quoteId,
-        txHash,
-        submittedByWallet: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
-      },
+    expect(writeContractMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        chainId: BASE_SEPOLIA_CHAIN_ID,
+        address: BASE_SEPOLIA_USDC_ADDRESS,
+        functionName: "transfer",
+        args: ["0x1234567890AbcdEF1234567890aBcdef12345678", 500000000n],
+      }),
     );
+    expect(savePaymentMock).toHaveBeenCalledWith(sampleInvoiceNgn.publicId, {
+      quoteId: sampleQuoteNgn.quoteId,
+      txHash,
+      submittedByWallet: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+    });
 
     // 5. Verify submitted state (NOT labeled as "Verified")
     expect(container?.textContent).toContain("Payment Broadcast");
-    expect(container?.textContent).toContain("Payment Successfully Broadcast");
+    expect(container?.textContent).toContain("Transaction hash saved");
+    expect(container?.textContent).toContain("Payment Broadcast");
     expect(container?.textContent).toContain(txHash);
-    expect(container?.textContent).toContain("Verification in progress");
+    expect(container?.textContent).toContain("Ready for verification");
     expect(container?.textContent).not.toContain("Verified Receipt");
   });
 
@@ -362,23 +428,115 @@ describe("PublicInvoicePayment Component", () => {
       );
     });
 
-    const reviewBtn = Array.from(container?.querySelectorAll("button") || []).find(
-      (b) => b.textContent?.includes("Review & Pay"),
-    );
+    const reviewBtn = Array.from(
+      container?.querySelectorAll("button") || [],
+    ).find((b) => b.textContent?.includes("Review & Pay"));
     await act(async () => {
       reviewBtn?.click();
     });
 
-    const confirmBtn = Array.from(container?.querySelectorAll("button") || []).find(
-      (b) => b.textContent?.includes("Confirm & Pay"),
-    );
+    const confirmBtn = Array.from(
+      container?.querySelectorAll("button") || [],
+    ).find((b) => b.textContent?.includes("Confirm & Pay"));
     await act(async () => {
       confirmBtn?.click();
     });
 
     expect(savePaymentMock).not.toHaveBeenCalled();
-    expect(container?.textContent).toContain("Transaction cancelled in wallet. No test USDC was sent.");
+    expect(container?.textContent).toContain(
+      "Transaction cancelled in wallet. No test USDC was sent.",
+    );
     expect(container?.textContent).not.toContain("Payment Broadcast");
+  });
+
+  it("keeps a broadcast hash visible and retries only persistence when saving fails", async () => {
+    const txHash = `0x${"d".repeat(64)}` as `0x${string}`;
+    const fetchQuoteMock = vi.fn().mockResolvedValue({
+      ok: true,
+      quote: sampleQuoteNgn,
+      reused: false,
+    } as QuoteRequestResult);
+    const savePaymentMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        code: "PAYMENT_UNAVAILABLE",
+        message:
+          "The transaction hash could not be saved safely. Do not send another payment yet.",
+        retryable: true,
+      } as PaymentSubmissionResult)
+      .mockResolvedValueOnce({
+        ok: true,
+        payment: {
+          paymentId: "77777777-7777-4777-8777-777777777777",
+          quoteId: sampleQuoteNgn.quoteId,
+          txHash,
+          submittedByWallet: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+          state: "submitted",
+          submittedAt: "2026-09-02T12:05:00.000Z",
+        },
+        reused: false,
+      } as PaymentSubmissionResult);
+    const writeContractMock = vi.fn().mockResolvedValue(txHash);
+
+    await act(async () => {
+      root?.render(
+        <PublicInvoicePayment
+          invoice={sampleInvoiceNgn}
+          onFetchQuote={fetchQuoteMock}
+          onSavePayment={savePaymentMock}
+          onWriteContract={writeContractMock}
+        />,
+      );
+    });
+
+    const reviewButton = Array.from(
+      container?.querySelectorAll("button") ?? [],
+    ).find((button) => button.textContent?.includes("Review & Pay"));
+    await act(async () => reviewButton?.click());
+    const confirmButton = Array.from(
+      container?.querySelectorAll("button") ?? [],
+    ).find((button) => button.textContent?.includes("Confirm & Pay"));
+    await act(async () => confirmButton?.click());
+
+    expect(container?.textContent).toContain(
+      "Payment broadcast — hash not saved yet",
+    );
+    expect(container?.textContent).toContain(txHash);
+    expect(container?.textContent).toContain("Do not pay again");
+    expect(writeContractMock).toHaveBeenCalledTimes(1);
+    expect(savePaymentMock).toHaveBeenCalledTimes(1);
+
+    const retryButton = Array.from(
+      container?.querySelectorAll("button") ?? [],
+    ).find((button) => button.textContent?.includes("Retry saving this hash"));
+    await act(async () => retryButton?.click());
+
+    expect(writeContractMock).toHaveBeenCalledTimes(1);
+    expect(savePaymentMock).toHaveBeenCalledTimes(2);
+    expect(container?.textContent).toContain("Transaction hash saved");
+  });
+
+  it("recovers a saved submitted payment without requesting a new quote or enabling Pay", async () => {
+    const fetchQuoteMock = vi.fn();
+
+    await act(async () => {
+      root?.render(
+        <PublicInvoicePayment
+          invoice={sampleInvoiceNgn}
+          initialPayment={recoveredSubmittedPayment}
+          onFetchQuote={fetchQuoteMock}
+        />,
+      );
+    });
+
+    expect(fetchQuoteMock).not.toHaveBeenCalled();
+    expect(container?.textContent).toContain("Transaction hash saved");
+    expect(container?.textContent).toContain(
+      recoveredSubmittedPayment.transaction.hash,
+    );
+    expect(container?.textContent).toContain("Do not send another payment");
+    expect(container?.textContent).not.toContain("Review & Pay");
   });
 
   it("enforces quote re-review if quote changes upon refresh", async () => {
@@ -386,7 +544,8 @@ describe("PublicInvoicePayment Component", () => {
     const secondQuote: PublicQuoteDto = {
       ...sampleQuoteNgn,
       quoteId: "44444444-4444-4444-4444-444444444444",
-      rateToUsd: "1550.00",
+      rateToUsd: "0.000645161289333333",
+      usdcAmountUnits: "483870967",
       usdcAmountFormatted: "483.870967",
     };
 
@@ -409,33 +568,28 @@ describe("PublicInvoicePayment Component", () => {
     });
 
     // Go to review step
-    const reviewBtn = Array.from(container?.querySelectorAll("button") || []).find(
-      (b) => b.textContent?.includes("Review & Pay"),
-    );
+    const reviewBtn = Array.from(
+      container?.querySelectorAll("button") || [],
+    ).find((b) => b.textContent?.includes("Review & Pay"));
     await act(async () => {
       reviewBtn?.click();
     });
 
     expect(container?.textContent).toContain("Confirm Payment Transaction");
 
-    // Click refresh quote while in review step
-    const refreshBtn = Array.from(container?.querySelectorAll("button") || []).find(
-      (b) => b.textContent?.includes("Refresh quote") || b.textContent?.includes("Back to quote"),
-    );
+    // Refresh directly while the old amount is still in the review state.
+    const refreshButton = Array.from(
+      container?.querySelectorAll("button") || [],
+    ).find((button) => button.textContent?.includes("Refresh quote"));
     await act(async () => {
-      refreshBtn?.click();
-    });
-
-    // Refresh quote explicitly
-    const actualRefreshBtn = Array.from(container?.querySelectorAll("button") || []).find(
-      (b) => b.textContent?.includes("Refresh quote"),
-    );
-    await act(async () => {
-      actualRefreshBtn?.click();
+      refreshButton?.click();
     });
 
     // State returns to quote ready with updated quote for re-review
     expect(container?.textContent).toContain("483.870967 test USDC");
-    expect(container?.textContent).toContain("Review & Pay 483.870967 test USDC");
+    expect(container?.textContent).toContain(
+      "Review & Pay 483.870967 test USDC",
+    );
+    expect(container?.textContent).not.toContain("Confirm Payment Transaction");
   });
 });

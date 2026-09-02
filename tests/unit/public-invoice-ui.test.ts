@@ -2,12 +2,16 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { PublicInvoiceCard } from "@/features/invoices/public-invoice-card";
 import type {
   PublicInvoiceDto,
   PublicInvoicePageState,
 } from "@/features/invoices/types";
+
+vi.mock("@/features/payments/public-invoice-payment", () => ({
+  PublicInvoicePayment: () => "Client Payment Step",
+}));
 
 const samplePublicInvoice: PublicInvoiceDto = {
   publicId: "pub_abc123",
@@ -53,7 +57,9 @@ describe("Public Invoice Presentation & State Contracts", () => {
       message: "This invoice link is invalid or no longer available.",
     };
     expect(notFoundState.kind).toBe("not_found");
-    expect(notFoundState.message).toBe("This invoice link is invalid or no longer available.");
+    expect(notFoundState.message).toBe(
+      "This invoice link is invalid or no longer available.",
+    );
 
     const unavailableState: PublicInvoicePageState = {
       kind: "unavailable",
@@ -72,10 +78,16 @@ describe("Public Invoice Presentation & State Contracts", () => {
   });
 
   it("distinguishes overdue (payable with warning) from cancelled (payment permanently disabled)", () => {
-    const overdueDto: PublicInvoiceDto = { ...samplePublicInvoice, status: "overdue" };
+    const overdueDto: PublicInvoiceDto = {
+      ...samplePublicInvoice,
+      status: "overdue",
+    };
     expect(overdueDto.status).toBe("overdue");
 
-    const cancelledDto: PublicInvoiceDto = { ...samplePublicInvoice, status: "cancelled" };
+    const cancelledDto: PublicInvoiceDto = {
+      ...samplePublicInvoice,
+      status: "cancelled",
+    };
     expect(cancelledDto.status).toBe("cancelled");
   });
 
@@ -104,17 +116,11 @@ describe("Public Invoice Presentation & State Contracts", () => {
       "utf8",
     );
     const reader = readFileSync(
-      join(
-        process.cwd(),
-        "src/lib/invoices/read-public-invoice.server.ts",
-      ),
+      join(process.cwd(), "src/lib/invoices/read-public-invoice.server.ts"),
       "utf8",
     );
     const service = readFileSync(
-      join(
-        process.cwd(),
-        "src/features/invoices/invoice-service.server.ts",
-      ),
+      join(process.cwd(), "src/features/invoices/invoice-service.server.ts"),
       "utf8",
     );
 
@@ -123,7 +129,9 @@ describe("Public Invoice Presentation & State Contracts", () => {
     expect(page).toContain("readPublicInvoicePageState");
     expect(reader).toContain('import "server-only"');
     expect(reader).toContain("invoice-service.server");
-    expect(reader).not.toMatch(/freelancerName|recipientAddress|status:\s*["']/);
+    expect(reader).not.toMatch(
+      /freelancerName|recipientAddress|status:\s*["']/,
+    );
     expect(service).toContain("getAdminDatabaseClient");
     expect(service).toContain("return unavailableState");
     expect(service).not.toMatch(/payproof\.example|inv_demo|mockInvoice/);
