@@ -1,12 +1,24 @@
 import { WorkspaceShell } from "@/components/workspace-shell";
 import { WalletAuthCard } from "@/features/auth/wallet-auth-card";
 import { getCreatorSession } from "@/features/auth/creator-session.server";
-import { InvoiceForm } from "@/features/invoices/invoice-form";
+import { ConnectedInvoiceForm } from "@/features/invoices/invoice-client-boundaries";
+import { getDuplicatePrefill } from "@/features/invoices/invoice-service.server";
 
 export const dynamic = "force-dynamic";
 
-export default async function NewInvoicePage() {
+export default async function NewInvoicePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ duplicate_ref?: string | string[] }>;
+}) {
   const creator = await getCreatorSession();
+  const requestedDuplicate = (await searchParams).duplicate_ref;
+  const duplicateId =
+    typeof requestedDuplicate === "string" ? requestedDuplicate : null;
+  const duplicatePrefill =
+    creator && duplicateId
+      ? await getDuplicatePrefill(duplicateId, creator)
+      : null;
 
   return (
     <WorkspaceShell
@@ -17,10 +29,12 @@ export default async function NewInvoicePage() {
       <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
         <WalletAuthCard initialCreatorAddress={creator?.address} />
         {creator ? (
-          <InvoiceForm recipientAddress={creator.address} />
+          <ConnectedInvoiceForm
+            recipientAddress={creator.address}
+            initialPrefill={duplicatePrefill}
+          />
         ) : null}
       </div>
     </WorkspaceShell>
   );
 }
-

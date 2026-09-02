@@ -18,3 +18,15 @@ export function getSupabasePublicConfig() {
     ),
   };
 }
+
+export function getPublicAppUrl(): string {
+  const value = requirePublicValue(
+    "NEXT_PUBLIC_APP_URL",
+    process.env.NEXT_PUBLIC_APP_URL,
+  );
+  try {
+    return new URL(value).toString();
+  } catch {
+    throw new Error("Invalid public application configuration: NEXT_PUBLIC_APP_URL");
+  }
+}

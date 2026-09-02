@@ -379,8 +379,11 @@ Rules:
 - Enable RLS on every application table.
 - Authenticated creators may select their own invoice and quote/payment summary
   through owner-scoped policies or server queries.
-- Creators may insert an invoice only with their authenticated user ID and
-  verified wallet; creator-controlled fields cannot override these values.
+- Authenticated browsers cannot insert or update invoice rows directly.
+  Server-only publication and cancellation first verify the creator session,
+  derive the authenticated user ID and Web3 wallet, then use the privileged
+  database client with an explicit owner predicate. Creator-controlled fields
+  cannot override these values.
 - Direct browser access to `telegraph_calls` and `usage_events` is denied.
 - Public invoice reads go through a server-only sanitized query by `public_id`;
   there is no anonymous broad-table SELECT policy.

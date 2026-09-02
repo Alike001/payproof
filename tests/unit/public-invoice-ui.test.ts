@@ -108,12 +108,23 @@ describe("Public Invoice Presentation & State Contracts", () => {
       ),
       "utf8",
     );
+    const service = readFileSync(
+      join(
+        process.cwd(),
+        "src/features/invoices/invoice-service.server.ts",
+      ),
+      "utf8",
+    );
 
     expect(page).not.toMatch(/payproof\.example|0x1234|INV-\$\{|new Date/);
     expect(page).not.toMatch(/includes\(["'](?:cancelled|overdue|verified)/);
     expect(page).toContain("readPublicInvoicePageState");
     expect(reader).toContain('import "server-only"');
-    expect(reader).toContain("return unavailableState");
+    expect(reader).toContain("invoice-service.server");
     expect(reader).not.toMatch(/freelancerName|recipientAddress|status:\s*["']/);
+    expect(service).toContain("getAdminDatabaseClient");
+    expect(service).toContain("return unavailableState");
+    expect(service).not.toMatch(/payproof\.example|inv_demo|mockInvoice/);
+    expect(service).not.toContain('.select("*")');
   });
 });

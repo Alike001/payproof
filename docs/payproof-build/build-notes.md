@@ -428,3 +428,49 @@ is claimed until Abu routes this checkpoint through the agreed PR process.
   request. The successful run passed `.env.local` values and the ephemeral
   local Supabase service credential into one child process without printing or
   persisting secrets. The temporary boolean-only diagnostic was removed.
+
+## 2026-09-02 — Review gate 2 accepted
+
+- Abu accepted review gate 2 after reviewing the six paid x402 paths, Miner
+  identities, normalized FX and transaction evidence, settlement costs,
+  primary/backup behavior, and the honestly persisted earlier EUR failure.
+- Checklist item 6 may now begin. The lead will establish authenticated invoice
+  services and DTO/route contracts before assigning the teammate's UI
+  integration branch, preserving the shared-file rule.
+
+## 2026-09-02 — Deliberate invoice write-boundary correction
+
+- Item 6 review found that the existing authenticated-role invoice
+  `INSERT`/`UPDATE` grants could be called directly from a browser. The RLS
+  policy proved the creator user ID but could not independently bind a supplied
+  recipient address to the Web3 identity inspected by the application server.
+- Publication and cancellation are therefore server-only writes after
+  `requireCreatorSession()` derives both creator and recipient identity.
+  Authenticated browsers retain owner-scoped RLS reads for history and
+  duplication, while anonymous browsers retain no table-enumeration access.
+- This intentionally tightens the accepted specification before the production
+  route exists. It does not change product behavior; it removes a bypass around
+  the promised receiving-address protection.
+
+## 2026-09-02 — Item 6 lead foundation verified
+
+- Added authenticated server-only publication and cancellation, owner-scoped
+  history and duplication reads, sanitized public invoice lookup, and connected
+  Route Handler/client boundaries. Creator and recipient identity are derived
+  from the verified wallet session; strict request validation rejects forged
+  fields before any write.
+- A disposable local creator completed a real database publish → public read →
+  cancel → repeated-cancel journey. The public DTO contained the expected EUR
+  invoice data without the private creator user ID, and the fixture was deleted
+  after verification.
+- The built production server returned the unguessable public route with HTTP
+  200 and the exact stored amount. Headless Chrome inspection passed at 1440px
+  and 390px widths. Turbopack development compilation stalled on the first
+  dynamic-route render in this environment, but the optimized production build
+  compiled and rendered the same route correctly; this is recorded as a local
+  development-tool observation, not hidden as a passing dev-server check.
+- Final lead checks passed: database lint, 32 pgTAP assertions, 122 application
+  tests with 8 opt-in tests skipped in the normal suite, strict typecheck,
+  warning-free ESLint, and the Next.js production build. Item 6 remains open
+  until the teammate supplies the required browser-journey and responsive QA
+  evidence against these locked contracts.

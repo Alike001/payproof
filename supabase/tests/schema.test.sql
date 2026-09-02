@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(26);
+select plan(28);
 
 select has_table('public', 'invoices', 'invoices table exists');
 select has_table('public', 'quotes', 'quotes table exists');
@@ -51,6 +51,14 @@ select ok(
 select ok(
   has_table_privilege('authenticated', 'public.payments', 'select'),
   'authenticated creators may read owner-filtered payments'
+);
+select ok(
+  not has_table_privilege('authenticated', 'public.invoices', 'insert'),
+  'authenticated browsers cannot bypass server-only invoice publication'
+);
+select ok(
+  not has_table_privilege('authenticated', 'public.invoices', 'update'),
+  'authenticated browsers cannot bypass server-only invoice cancellation'
 );
 
 select ok(

@@ -21,6 +21,14 @@ function localClient() {
   );
 }
 
+function adminClient() {
+  return createClient<Database>(
+    requiredEnvironment("NEXT_PUBLIC_SUPABASE_URL"),
+    requiredEnvironment("SUPABASE_SECRET_KEY"),
+    { auth: { persistSession: false, autoRefreshToken: false } },
+  );
+}
+
 async function signInFreshWallet() {
   const account = privateKeyToAccount(generatePrivateKey());
   const client = localClient();
@@ -54,7 +62,7 @@ async function signInFreshWallet() {
 }
 
 liveDescribe("Supabase Ethereum authentication", () => {
-  it("creates verified wallet identities and enforces creator RLS", async () => {
+  it("creates verified wallet identities and enforces server writes plus creator RLS reads", async () => {
     const creatorA = await signInFreshWallet();
     const creatorB = await signInFreshWallet();
 
@@ -72,7 +80,13 @@ liveDescribe("Supabase Ethereum authentication", () => {
       amount_minor: 100_00,
       due_date: "2026-09-07",
     };
-    const { data: created, error: insertError } = await creatorA.client
+    const { error: directInsertError } = await creatorA.client
+      .from("invoices")
+      .insert(invoice);
+    expect(directInsertError?.code).toBe("42501");
+
+    const privileged = adminClient();
+    const { data: created, error: insertError } = await privileged
       .from("invoices")
       .insert(invoice)
       .select("id")
@@ -102,5 +116,6 @@ liveDescribe("Supabase Ethereum authentication", () => {
 
     await creatorA.client.auth.signOut();
     await creatorB.client.auth.signOut();
+    await privileged.from("invoices").delete().eq("id", created!.id);
   });
 });
