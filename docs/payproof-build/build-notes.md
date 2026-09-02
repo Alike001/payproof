@@ -716,3 +716,35 @@ is claimed until Abu routes this checkpoint through the agreed PR process.
   the browser action receives the configured injected connector. The actual
   extension account chooser remains a user-authorized manual verification step;
   no wallet connection or payment was simulated.
+
+## 2026-09-02 — Item 8 real Base Sepolia payment proof complete
+
+- Abu personally reviewed and approved the prepared transfer before signing:
+  quote `f7fec0c9-0cbd-4a02-bbd3-566a9530a5de`, Base Sepolia chain `84532`,
+  official test-USDC contract `0x036CbD53842c5426634e7929541eC2318f3dCF7e`,
+  recipient `0x67FEF9A8e7054b6d8c50453bA1A55d7812A54d12`, payer
+  `0xdE67A35B322e5A31e8215B5245CA4e48d7977F71`, and exactly 37,500
+  base units (`0.037500` test USDC).
+- The real transaction
+  `0xd98f74a8b79466bb541ccaa741e1697ab2be014d052f45b5a19a42e914122b56`
+  was broadcast once. PayProof displayed **Transaction hash saved** and persisted
+  the Submitted payment at `2026-09-02 22:37:44.472 UTC` before Telegraph
+  finalized it at `2026-09-02 22:39:00.904924 UTC`; the 76-second separation is
+  durable proof of immediate hash persistence before verification.
+- Independent Base Sepolia JSON-RPC receipt inspection found successful status
+  `0x1` and the official-USDC Transfer log from the exact payer to the exact
+  recipient with data `0x927c` (37,500). No screenshot or wallet-returned claim
+  was used to decide success.
+- The paid `ONCHAIN_TX_LOOKUP` call used Truvian Exact On-Chain Truth Engine
+  Miner `8453` as primary, cost 10,000 test-USDC base units, stored x402
+  settlement transaction
+  `0xdd77fe70a7879d0221b4e899fd60407b63a1cf1f7a5d8c71413e3c33e0b922ab`,
+  and produced the normalized evidence consumed by exact local checks.
+- A clean browser reopened the public invoice URL and recovered the permanent
+  Telegraph Verified Receipt with the exact transaction hash, amount, payer,
+  Miner provenance, and no console errors. The real evidence screenshot is
+  saved outside the repository at
+  `/home/ali/Desktop/payproof-live-verified-receipt.png`.
+- Checklist item 8 is complete. Item 9 now has its required real exact-payment
+  proof but remains open until a separate real wrong-amount transfer produces
+  Mismatch and that hash is independently inspected.

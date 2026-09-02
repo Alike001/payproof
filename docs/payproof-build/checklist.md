@@ -116,7 +116,7 @@ delay the live quote, transfer, verification, and receipt path.
   Acceptance: USD makes no fake FX call; NGN/EUR/GBP require a real valid Telegraph result; repeated views reuse a valid quote; expiry blocks payment until the new amount is reviewed; submission before expiry locks that quote beyond confirmation; stale/invalid/unavailable rates never enable payment.
   Verify: Run money/quote/adaptor/route tests with a fake clock; run Playwright quote reuse, expiry, refresh, and unavailable cases; make one capped production-style quote and compare stored rate, base units, timestamps, Miner, and x402 proof.
 
-- [ ] **8. [Lead + teammate] Send official Base Sepolia test USDC and persist the hash immediately**
+- [x] **8. [Lead + teammate] Send official Base Sepolia test USDC and persist the hash immediately**
   Spec ref: `spec.md > Payment And Verification > Payment request`; `spec.md > API Contracts > POST /api/invoices/{publicId}/payments`; `prd.md > Epic 5: Pay the invoice on Base Sepolia`
   What to build: The lead adds the minimal official-USDC ABI, payment-attempt schema/route, quote/invoice checks, transaction-hash uniqueness, idempotency, and readiness-only Base client. The teammate builds the payment panel, chain-switch prompt, test-fund guidance, wallet confirmation/pending/rejection/error states, and the sequence that stores the hash before waiting for a receipt.
   Acceptance: The wallet is asked to call only official Base Sepolia USDC `transfer` with the exact quote units and recipient; rejecting the wallet creates no payment; broadcasting stores one hash; duplicate submission reuses the record; the Pay button disables while submitted; PayProof never holds funds.
