@@ -9,7 +9,12 @@ import {
   useRef,
   useState,
 } from "react";
-import { useAccount, useSwitchChain, useWriteContract } from "wagmi";
+import {
+  useAccount,
+  useConnect,
+  useSwitchChain,
+  useWriteContract,
+} from "wagmi";
 import { baseSepolia } from "wagmi/chains";
 import { requestQuote } from "@/features/quotes/quote-client-boundary";
 import type {
@@ -78,6 +83,19 @@ function walletTransactionError(error: unknown): string {
     return "Your wallet needs Base Sepolia test ETH for gas and enough test USDC for this payment.";
   }
   return "The wallet did not broadcast the payment. No transaction hash was saved. Check your wallet and try again.";
+}
+
+function walletConnectionError(error: unknown): string {
+  if (
+    (typeof error === "object" &&
+      error &&
+      "code" in error &&
+      error.code === 4001) ||
+    (error instanceof Error && /reject|denied|cancel/i.test(error.message))
+  ) {
+    return "Wallet connection cancelled. No transaction was sent.";
+  }
+  return "PayProof could not connect that wallet. Check the wallet extension and try again.";
 }
 
 function explorerUrl(txHash: string): string {
@@ -199,6 +217,7 @@ export function PublicInvoicePayment({
 }) {
   const baseId = useId();
   const { address, chainId, isConnected } = useAccount();
+  const { connectAsync, connectors, isPending: isConnecting } = useConnect();
   const { switchChainAsync } = useSwitchChain();
   const { writeContractAsync } = useWriteContract();
 
@@ -1531,14 +1550,39 @@ export function PublicInvoicePayment({
             ) : null}
 
             <div className={styles.walletActions}>
-              <ConnectButton
-                accountStatus={{
-                  smallScreen: "avatar",
-                  largeScreen: "address",
-                }}
-                chainStatus="icon"
-                showBalance={false}
-              />
+              {isConnected ? (
+                <ConnectButton
+                  accountStatus={{
+                    smallScreen: "avatar",
+                    largeScreen: "address",
+                  }}
+                  chainStatus="icon"
+                  showBalance={false}
+                />
+              ) : (
+                connectors.map((walletConnector) => (
+                  <button
+                    className={styles.secondaryButton}
+                    disabled={isConnecting || isSubmitting}
+                    key={walletConnector.uid}
+                    onClick={async () => {
+                      setNetworkError(null);
+                      try {
+                        await connectAsync({ connector: walletConnector });
+                      } catch (connectError) {
+                        setNetworkError(walletConnectionError(connectError));
+                      }
+                    }}
+                    type="button"
+                  >
+                    {isConnecting
+                      ? "Opening wallet…"
+                      : walletConnector.id === "walletConnect"
+                        ? "WalletConnect"
+                        : "Connect browser wallet"}
+                  </button>
+                ))
+              )}
             </div>
 
             <p className={styles.faucetNotice}>

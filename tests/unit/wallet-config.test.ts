@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const walletMocks = vi.hoisted(() => ({
   createConfig: vi.fn((options: unknown) => options),
@@ -26,16 +26,21 @@ vi.mock("wagmi/connectors", () => ({
 
 describe("wallet config", () => {
   beforeEach(() => {
+    vi.resetModules();
+    vi.stubEnv("NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID", "test-project-id");
     walletMocks.createConfig.mockClear();
   });
 
-  it("disables automatic EIP-6963 connector discovery to prevent duplicate wallet buttons", async () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("registers one browser connector and one WalletConnect connector without discovery", async () => {
     const { getWalletConfig } = await import("@/lib/wallet/config");
 
     getWalletConfig();
 
     expect(walletMocks.createConfig).toHaveBeenCalledWith(
       expect.objectContaining({
+        connectors: [{ id: "injected" }, { id: "walletConnect" }],
         multiInjectedProviderDiscovery: false,
       }),
     );

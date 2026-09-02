@@ -705,3 +705,14 @@ is claimed until Abu routes this checkpoint through the agreed PR process.
   failure does not call backup. A fresh rendered visit reused the selected
   `0.037520` quote without adding any quote or Telegraph-call rows. No wallet
   was connected and no payment transaction was sent during inspection.
+- Follow-up payer testing showed that RainbowKit's disconnected `ConnectButton`
+  modal had no registered RainbowKit wallet definitions when fed PayProof's raw
+  Wagmi connectors. The public payment panel now renders the same explicit
+  **Connect browser wallet** and **WalletConnect** actions used by creator
+  authentication, while RainbowKit remains responsible only for the connected
+  account menu. This also avoids importing unrelated Base/Solana wallet code.
+- Desktop Playwright QA confirmed one visible browser-wallet action, one visible
+  WalletConnect action, and no empty dialog. Unit interaction coverage confirms
+  the browser action receives the configured injected connector. The actual
+  extension account chooser remains a user-authorized manual verification step;
+  no wallet connection or payment was simulated.

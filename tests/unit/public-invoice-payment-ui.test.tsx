@@ -175,6 +175,57 @@ afterEach(() => {
 });
 
 describe("PublicInvoicePayment Component", () => {
+  it("shows direct payer-wallet choices instead of an empty selection modal", async () => {
+    const browserConnector = { id: "injected", uid: "browser-wallet" };
+    const walletConnectConnector = {
+      id: "walletConnect",
+      uid: "wallet-connect",
+    };
+    const connectAsync = vi.fn().mockResolvedValue(undefined);
+    mockUseAccount.mockReturnValue({
+      address: undefined,
+      chainId: undefined,
+      isConnected: false,
+    });
+    mockUseConnect.mockReturnValue({
+      connectAsync,
+      connectors: [browserConnector, walletConnectConnector],
+      isPending: false,
+    });
+    const fetchQuoteMock = vi.fn().mockResolvedValue({
+      ok: true,
+      quote: sampleQuoteNgn,
+      reused: true,
+    } as QuoteRequestResult);
+
+    await act(async () => {
+      root?.render(
+        <PublicInvoicePayment
+          invoice={sampleInvoiceNgn}
+          onFetchQuote={fetchQuoteMock}
+        />,
+      );
+    });
+
+    const browserButton = Array.from(
+      container?.querySelectorAll("button") || [],
+    ).find((button) => button.textContent === "Connect browser wallet");
+    const walletConnectButton = Array.from(
+      container?.querySelectorAll("button") || [],
+    ).find((button) => button.textContent === "WalletConnect");
+
+    expect(browserButton).toBeDefined();
+    expect(walletConnectButton).toBeDefined();
+
+    await act(async () => {
+      browserButton?.click();
+    });
+
+    expect(connectAsync).toHaveBeenCalledWith({
+      connector: browserConnector,
+    });
+  });
+
   it("requests the initial paid quote only once when React checks effects twice", async () => {
     const fetchQuoteMock = vi.fn().mockResolvedValue({
       ok: true,

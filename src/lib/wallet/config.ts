@@ -27,7 +27,8 @@ export function getWalletConfig() {
         showQrModal: true,
         metadata: {
           name: "PayProof",
-          description: "Local-currency invoices with Telegraph-verified USDC receipts.",
+          description:
+            "Local-currency invoices with Telegraph-verified USDC receipts.",
           url: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
           icons: [],
         },
