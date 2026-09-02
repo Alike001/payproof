@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { withExternalChrome } from "./external-chrome";
 import type { Database } from "@/lib/database/types";
@@ -8,29 +8,102 @@ import { parseLocalAmount } from "@/lib/money";
 type DisposableData = {
   userId: string;
   creatorWallet: string;
+  invoiceIds: string[];
   openInvoiceId: string;
   openPublicId: string;
-  cancelledInvoiceId: string;
   cancelledPublicId: string;
-  overdueInvoiceId: string;
   overduePublicId: string;
 };
 
-async function setupDisposableData(): Promise<DisposableData | null> {
+type PartialDisposableData = Pick<DisposableData, "userId" | "invoiceIds">;
+
+const hasDatabaseAdminConfig = Boolean(
+  process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SECRET_KEY,
+);
+
+test.skip(
+  !hasDatabaseAdminConfig,
+  "requires NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY for real invoice fixtures",
+);
+
+function getAdminClient(): SupabaseClient<Database> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const secretKey = process.env.SUPABASE_SECRET_KEY;
 
   if (!supabaseUrl || !secretKey) {
-    return null;
+    throw new Error("Supabase admin configuration is unavailable.");
   }
 
-  try {
-    const admin: SupabaseClient<Database> = createClient<Database>(
-      supabaseUrl,
-      secretKey,
-      { auth: { autoRefreshToken: false, persistSession: false } },
-    );
+  return createClient<Database>(supabaseUrl, secretKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+}
 
+async function cleanupDisposableData(
+  admin: SupabaseClient<Database>,
+  data: PartialDisposableData,
+): Promise<void> {
+  const failures: Error[] = [];
+
+  if (data.invoiceIds.length > 0) {
+    const { data: deletedRows, error } = await admin
+      .from("invoices")
+      .delete()
+      .in("id", data.invoiceIds)
+      .select("id");
+
+    if (error) {
+      failures.push(
+        new Error(`Could not delete E2E invoices: ${error.message}`),
+      );
+    } else if (deletedRows.length !== data.invoiceIds.length) {
+      failures.push(
+        new Error(
+          `Expected to delete ${data.invoiceIds.length} E2E invoices, deleted ${deletedRows.length}.`,
+        ),
+      );
+    }
+  }
+
+  if (data.userId) {
+    const { error } = await admin.auth.admin.deleteUser(data.userId);
+    if (error) {
+      failures.push(new Error(`Could not delete E2E user: ${error.message}`));
+    }
+  }
+
+  if (failures.length > 0) {
+    throw new AggregateError(failures, "E2E fixture cleanup failed.");
+  }
+}
+
+async function insertInvoice(
+  admin: SupabaseClient<Database>,
+  invoiceIds: string[],
+  values: Database["public"]["Tables"]["invoices"]["Insert"],
+): Promise<{ id: string; publicId: string }> {
+  const { data, error } = await admin
+    .from("invoices")
+    .insert(values)
+    .select("id, public_id")
+    .single();
+
+  if (error || !data) {
+    throw new Error(
+      `Could not create E2E invoice: ${error?.message ?? "no row returned"}`,
+    );
+  }
+
+  invoiceIds.push(data.id);
+  return { id: data.id, publicId: data.public_id };
+}
+
+async function setupDisposableData(
+  admin: SupabaseClient<Database>,
+): Promise<DisposableData> {
+  const partial: PartialDisposableData = { userId: "", invoiceIds: [] };
+
+  try {
     const testEmail = `e2e-journey-${randomUUID()}@payproof.test`;
     const { data: userData, error: userError } =
       await admin.auth.admin.createUser({
@@ -40,112 +113,83 @@ async function setupDisposableData(): Promise<DisposableData | null> {
       });
 
     if (userError || !userData.user) {
-      return null;
+      throw new Error(
+        `Could not create E2E user: ${userError?.message ?? "no user returned"}`,
+      );
     }
 
-    const userId = userData.user.id;
+    partial.userId = userData.user.id;
     const creatorWallet = "0x1234567890AbcdEF1234567890aBcdef12345678";
-    const now = new Date().toISOString();
 
-    // 1. Open Invoice
-    const { data: openRow } = await admin
-      .from("invoices")
-      .insert({
-        creator_user_id: userId,
-        creator_wallet: creatorWallet,
-        recipient_wallet: creatorWallet,
-        freelancer_name: "Ada Lovelace Engineering",
-        client_reference: "E2E Ref #402",
-        description: "Quantum Computing Consultation & Architecture",
-        currency: "NGN",
-        amount_minor: Number(parseLocalAmount("750000.00")),
-        due_date: "2026-10-15",
-        lifecycle: "open",
-      })
-      .select("id, public_id")
-      .single();
+    const openInvoice = await insertInvoice(admin, partial.invoiceIds, {
+      creator_user_id: partial.userId,
+      creator_wallet: creatorWallet,
+      recipient_wallet: creatorWallet,
+      freelancer_name: "Ada Lovelace Engineering",
+      client_reference: "E2E Ref #402",
+      description: "Quantum Computing Consultation & Architecture",
+      currency: "NGN",
+      amount_minor: Number(parseLocalAmount("750000.00")),
+      due_date: "2026-10-15",
+      lifecycle: "open",
+    });
 
-    // 2. Cancelled Invoice
-    const { data: cancelledRow } = await admin
-      .from("invoices")
-      .insert({
-        creator_user_id: userId,
-        creator_wallet: creatorWallet,
-        recipient_wallet: creatorWallet,
-        freelancer_name: "Ada Lovelace Engineering",
-        client_reference: "Cancelled Ref",
-        description: "Cancelled Design Workshop",
-        currency: "USD",
-        amount_minor: Number(parseLocalAmount("300.00")),
-        due_date: "2026-10-15",
-        lifecycle: "cancelled",
-        cancelled_at: now,
-      })
-      .select("id, public_id")
-      .single();
+    const cancelledInvoice = await insertInvoice(admin, partial.invoiceIds, {
+      creator_user_id: partial.userId,
+      creator_wallet: creatorWallet,
+      recipient_wallet: creatorWallet,
+      freelancer_name: "Ada Lovelace Engineering",
+      client_reference: "Cancelled Ref",
+      description: "Cancelled Design Workshop",
+      currency: "USD",
+      amount_minor: Number(parseLocalAmount("300.00")),
+      due_date: "2026-10-15",
+      lifecycle: "cancelled",
+      cancelled_at: new Date().toISOString(),
+    });
 
-    // 3. Overdue Invoice
-    const { data: overdueRow } = await admin
-      .from("invoices")
-      .insert({
-        creator_user_id: userId,
-        creator_wallet: creatorWallet,
-        recipient_wallet: creatorWallet,
-        freelancer_name: "Ada Lovelace Engineering",
-        client_reference: "Overdue Ref",
-        description: "Overdue Technical Audit",
-        currency: "EUR",
-        amount_minor: Number(parseLocalAmount("1200.00")),
-        due_date: "2025-01-01",
-        lifecycle: "open",
-      })
-      .select("id, public_id")
-      .single();
-
-    if (!openRow || !cancelledRow || !overdueRow) {
-      await admin.auth.admin.deleteUser(userId);
-      return null;
-    }
+    const overdueInvoice = await insertInvoice(admin, partial.invoiceIds, {
+      creator_user_id: partial.userId,
+      creator_wallet: creatorWallet,
+      recipient_wallet: creatorWallet,
+      freelancer_name: "Ada Lovelace Engineering",
+      client_reference: "Overdue Ref",
+      description: "Overdue Technical Audit",
+      currency: "EUR",
+      amount_minor: Number(parseLocalAmount("1200.00")),
+      due_date: "2025-01-01",
+      lifecycle: "open",
+    });
 
     return {
-      userId,
+      userId: partial.userId,
       creatorWallet,
-      openInvoiceId: openRow.id,
-      openPublicId: openRow.public_id,
-      cancelledInvoiceId: cancelledRow.id,
-      cancelledPublicId: cancelledRow.public_id,
-      overdueInvoiceId: overdueRow.id,
-      overduePublicId: overdueRow.public_id,
+      invoiceIds: partial.invoiceIds,
+      openInvoiceId: openInvoice.id,
+      openPublicId: openInvoice.publicId,
+      cancelledPublicId: cancelledInvoice.publicId,
+      overduePublicId: overdueInvoice.publicId,
     };
-  } catch {
-    return null;
+  } catch (setupError) {
+    try {
+      await cleanupDisposableData(admin, partial);
+    } catch (cleanupError) {
+      throw new AggregateError(
+        [setupError, cleanupError],
+        "E2E fixture setup and cleanup both failed.",
+      );
+    }
+    throw setupError;
   }
 }
 
-async function cleanupDisposableData(data: DisposableData | null) {
-  if (!data) return;
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const secretKey = process.env.SUPABASE_SECRET_KEY;
-  if (!supabaseUrl || !secretKey) return;
-
-  try {
-    const admin: SupabaseClient<Database> = createClient<Database>(
-      supabaseUrl,
-      secretKey,
-      { auth: { autoRefreshToken: false, persistSession: false } },
-    );
-    await admin
-      .from("invoices")
-      .delete()
-      .in("id", [
-        data.openInvoiceId,
-        data.cancelledInvoiceId,
-        data.overdueInvoiceId,
-      ]);
-    await admin.auth.admin.deleteUser(data.userId);
-  } catch {
-    // ignore
-  }
+async function expectNoHorizontalOverflow(page: Page) {
+  const hasHorizontalOverflow = await page.evaluate(
+    () =>
+      document.documentElement.scrollWidth >
+      document.documentElement.clientWidth,
+  );
+  expect(hasHorizontalOverflow).toBe(false);
 }
 
 test("Item 6 public invoice browser journey and responsive proof", async ({
@@ -155,14 +199,29 @@ test("Item 6 public invoice browser journey and responsive proof", async ({
     testInfo.project.name === "mobile-chrome"
       ? { width: 390, height: 844 }
       : { width: 1440, height: 1000 };
-
-  const data = await setupDisposableData();
+  const admin = getAdminClient();
+  let data: DisposableData | undefined;
 
   try {
+    const fixture = await setupDisposableData(admin);
+    data = fixture;
+
     await withExternalChrome(viewport, async (page) => {
-      // 1. Invalid public ID fails closed without requiring a wallet
-      const notFoundRes = await page.goto(`${baseURL}/i/invalid-public-id-999`);
-      expect(notFoundRes?.status()).toBe(200);
+      await page.addInitScript(() => {
+        Object.defineProperty(navigator, "share", {
+          configurable: true,
+          value: undefined,
+        });
+        Object.defineProperty(navigator, "clipboard", {
+          configurable: true,
+          value: { writeText: () => Promise.resolve() },
+        });
+      });
+
+      const notFoundResponse = await page.goto(
+        `${baseURL}/i/invalid-public-id-999`,
+      );
+      expect(notFoundResponse?.status()).toBe(200);
       await expect(
         page.getByRole("heading", { name: "Invoice Not Found" }),
       ).toBeVisible();
@@ -172,84 +231,82 @@ test("Item 6 public invoice browser journey and responsive proof", async ({
       await expect(
         page.getByRole("link", { name: "Go to PayProof home" }),
       ).toBeVisible();
+      await expectNoHorizontalOverflow(page);
 
-      if (data) {
-        // 2. Real unguessable public invoice URL (Open state)
-        const openRes = await page.goto(`${baseURL}/i/${data.openPublicId}`);
-        expect(openRes?.status()).toBe(200);
+      const openResponse = await page.goto(
+        `${baseURL}/i/${fixture.openPublicId}`,
+      );
+      expect(openResponse?.status()).toBe(200);
+      await expect(
+        page.getByText(
+          "Base Sepolia testnet • Test USDC has no real monetary value",
+        ),
+      ).toBeVisible();
+      await expect(
+        page.getByText("Anyone with this link can view this invoice", {
+          exact: false,
+        }),
+      ).toBeVisible();
+      await expect(
+        page.getByText("Awaiting Payment", { exact: true }),
+      ).toBeVisible();
+      await expect(page.getByText("Ada Lovelace Engineering")).toBeVisible();
+      await expect(
+        page.getByText("Quantum Computing Consultation & Architecture"),
+      ).toBeVisible();
+      await expect(page.getByText("₦750,000.00")).toBeVisible();
+      await expect(page.getByText("2026-10-15")).toBeVisible();
+      await expect(page.getByText("0x1234…5678")).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Client Payment Step" }),
+      ).toBeVisible();
 
-        // Verify freelancer, description, amount, due date, recipient summary, status, privacy notice, Base Sepolia warning
-        await expect(
-          page.getByText("Base Sepolia testnet • Test USDC has no real monetary value"),
-        ).toBeVisible();
-        await expect(
-          page.getByText("Anyone with this link can view this invoice", {
-            exact: false,
-          }),
-        ).toBeVisible();
-        await expect(page.getByText("Awaiting Payment")).toBeVisible();
-        await expect(
-          page.getByText("Ada Lovelace Engineering"),
-        ).toBeVisible();
-        await expect(
-          page.getByText("Quantum Computing Consultation & Architecture"),
-        ).toBeVisible();
-        await expect(page.getByText("₦750,000.00")).toBeVisible();
-        await expect(page.getByText("0x1234…5678")).toBeVisible();
+      const content = await page.content();
+      expect(content).not.toContain(fixture.userId);
+      expect(content).not.toContain(fixture.openInvoiceId);
 
-        // 3. Confirm private creator userId and internal UUID are completely absent from HTML
-        const content = await page.content();
-        expect(content).not.toContain(data.userId);
-        expect(content).not.toContain(data.openInvoiceId);
-
-        // 4. Test Share / Clipboard fallback with truthful feedback
-        const shareButton = page.getByRole("button", {
-          name: /Share invoice link/i,
-        });
-        if (await shareButton.isVisible()) {
-          await shareButton.click();
-          await expect(
-            page.getByText(/Link Copied|copied to clipboard|Could not copy/i),
-          ).toBeVisible();
-        }
-
-        // 5. Test Cancelled Invoice State (Payment permanently disabled)
-        await page.goto(`${baseURL}/i/${data.cancelledPublicId}`);
-        await expect(page.getByText("Cancelled", { exact: false })).toBeVisible();
-        await expect(
-          page.getByText("Invoice Cancelled:", { exact: false }),
-        ).toBeVisible();
-
-        // 6. Test Overdue Invoice State (Overdue remains payable!)
-        await page.goto(`${baseURL}/i/${data.overduePublicId}`);
-        await expect(page.getByText("Overdue", { exact: false })).toBeVisible();
-        await expect(
-          page.getByText("Past Due Date:", { exact: false }),
-        ).toBeVisible();
-        await expect(
-          page.getByRole("heading", { name: "Client Payment Step" }),
-        ).toBeVisible();
-      } else {
-        // Fallback check when DB is offline: test non-existent UUID
-        const fallbackRes = await page.goto(
-          `${baseURL}/i/00000000-0000-0000-0000-000000000000`,
-        );
-        expect(fallbackRes?.status()).toBe(200);
-        await expect(
-          page.getByText("Base Sepolia testnet", { exact: false }),
-        ).toBeVisible();
-      }
-
-      // 7. Verify NO horizontal overflow at current viewport
-      const hasHorizontalOverflow = await page.evaluate(() => {
-        return (
-          document.documentElement.scrollWidth >
-          document.documentElement.clientWidth
-        );
+      const shareButton = page.getByRole("button", {
+        name: "Share invoice link ↗",
       });
-      expect(hasHorizontalOverflow).toBe(false);
+      await expect(shareButton).toBeVisible();
+      await shareButton.click();
+      await expect(
+        page.getByText("Link copied to clipboard!", { exact: true }).last(),
+      ).toBeVisible();
+      await expectNoHorizontalOverflow(page);
+
+      const cancelledResponse = await page.goto(
+        `${baseURL}/i/${fixture.cancelledPublicId}`,
+      );
+      expect(cancelledResponse?.status()).toBe(200);
+      await expect(page.getByText("Cancelled", { exact: true })).toBeVisible();
+      await expect(
+        page.getByText("Payment is permanently disabled", { exact: false }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Client Payment Step" }),
+      ).toHaveCount(0);
+      await expectNoHorizontalOverflow(page);
+
+      const overdueResponse = await page.goto(
+        `${baseURL}/i/${fixture.overduePublicId}`,
+      );
+      expect(overdueResponse?.status()).toBe(200);
+      await expect(page.getByText("⚠ Overdue", { exact: true })).toBeVisible();
+      await expect(
+        page.getByText(
+          "This invoice passed its due date (2025-01-01) but remains open for payment.",
+          { exact: false },
+        ),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Client Payment Step" }),
+      ).toBeVisible();
+      await expectNoHorizontalOverflow(page);
     });
   } finally {
-    await cleanupDisposableData(data);
+    if (data) {
+      await cleanupDisposableData(admin, data);
+    }
   }
 });
