@@ -110,7 +110,7 @@ delay the live quote, transfer, verification, and receipt path.
   Acceptance: A signed creator can publish and share an unguessable invoice in any supported currency; anyone with its link can view only public fields; creator history returns after reconnecting; published details cannot be edited; open invoices can be cancelled or duplicated; overdue remains payable; verified invoices cannot be cancelled.
   Verify: Run route/RLS/state tests and Playwright create→share→public-view tests; manually inspect mobile sharing and an unguessable URL; test forged creator/recipient fields and cross-wallet history; review and merge the teammate PR only after screenshots and checks pass.
 
-- [ ] **7. [Lead + teammate] Add locked quote creation and countdown behavior**
+- [x] **7. [Lead + teammate] Add locked quote creation and countdown behavior**
   Spec ref: `spec.md > Money And Quote Rules`; `spec.md > API Contracts > POST /api/invoices/{publicId}/quote`; `prd.md > Epic 4: Obtain and understand a Telegraph-backed quote`
   What to build: The lead implements valid-quote reuse, USD parity, paid FX primary/backup calls, exact Decimal.js conversion, provenance storage, 15-minute expiry, cooldown/rate limits, and safe quote DTOs. The teammate builds the quote card, source labels, exact USDC display, countdown, refresh review, loading, expired, and unavailable states.
   Acceptance: USD makes no fake FX call; NGN/EUR/GBP require a real valid Telegraph result; repeated views reuse a valid quote; expiry blocks payment until the new amount is reviewed; submission before expiry locks that quote beyond confirmation; stale/invalid/unavailable rates never enable payment.

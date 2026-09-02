@@ -220,8 +220,7 @@ test("Item 6 public invoice browser journey and responsive proof", async ({
     data = fixture;
 
     await withExternalChrome(viewport, async (page) => {
-      const quotedAt = new Date();
-      const expiresAt = new Date(quotedAt.getTime() + 15 * 60 * 1_000);
+      let openQuoteRequests = 0;
 
       await page.addInitScript(() => {
         Object.defineProperty(navigator, "share", {
@@ -235,34 +234,107 @@ test("Item 6 public invoice browser journey and responsive proof", async ({
       });
 
       await page.route(
-        `**/api/invoices/${fixture.openPublicId}/quote`,
+        "**/api/invoices/*/quote",
         async (route) => {
           expect(route.request().method()).toBe("POST");
+          const publicId = new URL(route.request().url()).pathname.split("/")[3];
+          const quotedAt = new Date();
+
+          if (publicId === fixture.openPublicId) {
+            openQuoteRequests += 1;
+            if (openQuoteRequests === 3) {
+              await route.fulfill({
+                contentType: "application/json",
+                status: 503,
+                body: JSON.stringify({
+                  ok: false,
+                  code: "QUOTE_UNAVAILABLE",
+                  message:
+                    "A trustworthy quote is temporarily unavailable. Payment remains paused.",
+                  retryable: true,
+                }),
+              });
+              return;
+            }
+
+            const refreshed = openQuoteRequests >= 2;
+            const expiresAt = new Date(
+              quotedAt.getTime() + (refreshed ? 15 * 60 * 1_000 : 2_000),
+            );
+            await route.fulfill({
+              contentType: "application/json",
+              status: 200,
+              body: JSON.stringify({
+                ok: true,
+                reused: openQuoteRequests >= 4,
+                quote: {
+                  quoteId: refreshed
+                    ? "99999999-9999-4999-8999-999999999999"
+                    : "88888888-8888-4888-8888-888888888888",
+                  sourceCurrency: "NGN",
+                  targetCurrency: "USD",
+                  localAmountFormatted: "₦750,000.00",
+                  rateToUsd: refreshed
+                    ? "0.000680000000000000"
+                    : "0.000666666666666667",
+                  usdcAmountUnits: refreshed ? "510000000" : "500000000",
+                  usdcAmountFormatted: refreshed ? "510.000000" : "500.000000",
+                  quotedAt: quotedAt.toISOString(),
+                  expiresAt: expiresAt.toISOString(),
+                  sourceObservedAt: quotedAt.toISOString(),
+                  source: {
+                    kind: "telegraph_fx",
+                    name: "Structured FX feed",
+                    minerId: "20260827",
+                    minerName: "FX Rate Mirror",
+                    attemptRole: "primary",
+                  },
+                },
+              }),
+            });
+            return;
+          }
+
+          if (publicId === fixture.overduePublicId) {
+            const expiresAt = new Date(quotedAt.getTime() + 15 * 60 * 1_000);
+            await route.fulfill({
+              contentType: "application/json",
+              status: 200,
+              body: JSON.stringify({
+                ok: true,
+                reused: true,
+                quote: {
+                  quoteId: "77777777-7777-4777-8777-777777777777",
+                  sourceCurrency: "EUR",
+                  targetCurrency: "USD",
+                  localAmountFormatted: "€1,200.00",
+                  rateToUsd: "1.083333333333333333",
+                  usdcAmountUnits: "1300000000",
+                  usdcAmountFormatted: "1300.000000",
+                  quotedAt: quotedAt.toISOString(),
+                  expiresAt: expiresAt.toISOString(),
+                  sourceObservedAt: quotedAt.toISOString(),
+                  source: {
+                    kind: "telegraph_fx",
+                    name: "Structured FX feed",
+                    minerId: "20260827",
+                    minerName: "FX Rate Mirror",
+                    attemptRole: "primary",
+                  },
+                },
+              }),
+            });
+            return;
+          }
+
           await route.fulfill({
             contentType: "application/json",
-            status: 200,
+            status: 404,
             body: JSON.stringify({
-              ok: true,
-              reused: true,
-              quote: {
-                quoteId: "88888888-8888-4888-8888-888888888888",
-                sourceCurrency: "NGN",
-                targetCurrency: "USD",
-                localAmountFormatted: "₦750,000.00",
-                rateToUsd: "0.000666666666666667",
-                usdcAmountUnits: "500000000",
-                usdcAmountFormatted: "500.000000",
-                quotedAt: quotedAt.toISOString(),
-                expiresAt: expiresAt.toISOString(),
-                sourceObservedAt: quotedAt.toISOString(),
-                source: {
-                  kind: "telegraph_fx",
-                  name: "Structured FX feed",
-                  minerId: "20260827",
-                  minerName: "FX Rate Mirror",
-                  attemptRole: "primary",
-                },
-              },
+              ok: false,
+              code: "INVOICE_NOT_FOUND",
+              message: "This invoice link is invalid or no longer available.",
+              retryable: false,
             }),
           });
         },
@@ -323,6 +395,40 @@ test("Item 6 public invoice browser journey and responsive proof", async ({
         page.getByRole("button", { name: "Connect wallet to pay" }),
       ).toBeDisabled();
 
+      await expect(page.getByText("Quote Expired", { exact: true })).toBeVisible({
+        timeout: 5_000,
+      });
+      await expect(
+        page.getByRole("button", { name: "Connect wallet to pay" }),
+      ).toBeDisabled();
+
+      await page
+        .getByRole("button", { name: "Refresh conversion quote" })
+        .click();
+      await expect(
+        page.getByText("510.000000 test USDC", { exact: true }),
+      ).toBeVisible();
+      await expect(
+        page.getByText("1 NGN = 0.000680000000000000 USD"),
+      ).toBeVisible();
+
+      await page
+        .getByRole("button", { name: "Refresh conversion quote" })
+        .click();
+      await expect(page.getByText("Quote Unavailable:")).toBeVisible();
+      await expect(
+        page.getByRole("alert").filter({
+          hasText:
+            "A trustworthy quote is temporarily unavailable. Payment remains paused.",
+        }),
+      ).toBeVisible();
+
+      await page.getByRole("button", { name: "Try again" }).click();
+      await expect(
+        page.getByText("510.000000 test USDC", { exact: true }),
+      ).toBeVisible();
+      expect(openQuoteRequests).toBe(4);
+
       const content = await page.content();
       expect(content).not.toContain(fixture.userId);
       expect(content).not.toContain(fixture.openInvoiceId);
@@ -363,6 +469,9 @@ test("Item 6 public invoice browser journey and responsive proof", async ({
       ).toBeVisible();
       await expect(
         page.getByRole("heading", { name: "Client Payment Step" }),
+      ).toBeVisible();
+      await expect(
+        page.getByText("1300.000000 test USDC", { exact: true }),
       ).toBeVisible();
       await expectNoHorizontalOverflow(page);
     });

@@ -537,6 +537,35 @@ is claimed until Abu routes this checkpoint through the agreed PR process.
   live/opt-in cases skipped, warning-free ESLint, strict TypeScript, and the
   optimized Next.js production build.
 
+## 2026-09-02 — Checklist item 7 completion
+
+- Merged teammate quote presentation now covers loading, exact source/rate and
+  test-USDC display, accessible countdown, expiry, refresh, changed-quote
+  review, unavailable/cooldown, USD parity, and payment-disabled states.
+- Strengthened the production-server browser journey so every invoice quote
+  request is intercepted during E2E runs. This prevents an overdue-invoice
+  assertion from accidentally reaching the paid Telegraph route and proves
+  expiry, changed-rate refresh, unavailable handling, retry, reuse, and the
+  desktop/mobile layouts without testnet spend.
+- Added a dedicated opt-in live quote-flow harness. Its Node parent loads the
+  ignored local environment before Vitest enters `NODE_ENV=test`, so secrets
+  remain private and the paid suite cannot silently skip because Next.js
+  deliberately excludes `.env.local` in the test environment.
+- One real NGN quote action used FX Rate Mirror `20260827` as primary. The
+  structured rate was `0.00075`; `250,000.00 NGN` produced the exact integer
+  amount `187500000` and display amount `187.500000` test USDC. The paid call
+  cost `10000` Base Sepolia USDC base units and stored settlement transaction
+  `0x33985cdeb5f07b27358405d791df9499efac3b531def3152e00620959f993fe5`.
+- The live assertion exposed only a representation difference: PostgreSQL
+  returned the same numeric rate padded to 18 decimal places. The harness now
+  compares through the existing exact decimal normalizer; no second paid call
+  was made. The temporary auth user, invoice, quote, and usage events were
+  removed, while the sanitized paid-success settlement record remains.
+- Final verification passed 24 focused quote/payment UI and real-database
+  tests, the desktop/mobile production-server quote journey, warning-free lint,
+  strict TypeScript, 171 normal tests with 24 opt-in tests skipped, and the
+  optimized Next.js build. Item 7 is complete.
+
 ## 2026-09-02 — Item 8 lead payment-submission foundation
 
 - Added the minimal ERC-20 `transfer(address,uint256)` ABI and a pure transfer
