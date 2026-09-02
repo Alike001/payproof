@@ -967,10 +967,15 @@ describe("PublicInvoicePayment Component", () => {
       expect(row?.textContent).not.toContain("Match ✓");
     }
 
-    // Provides action to pay again
+    expect(container?.textContent).toContain("This invoice is still unpaid.");
+    expect(container?.textContent).toContain(
+      "PayProof does not combine partial payments or issue refunds.",
+    );
+
+    // Provides an explicit action to retry with the exact payment
     const tryAgainBtn = Array.from(
       container?.querySelectorAll("button") || [],
-    ).find((b) => b.textContent?.includes("Pay this invoice again"));
+    ).find((b) => b.textContent?.includes("Retry with the exact payment"));
     expect(tryAgainBtn).toBeDefined();
 
     await act(async () => {

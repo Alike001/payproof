@@ -161,9 +161,34 @@ export async function listCreatorInvoices(input: {
 
   const rows = (data ?? []) as InvoiceRow[];
   const page = rows.slice(0, historyLimit);
+  const latestPaymentState = new Map<string, string>();
+  if (page.length > 0) {
+    const { data: paymentRows, error: paymentError } = await database
+      .from("payments")
+      .select("invoice_id,state,submitted_at")
+      .in(
+        "invoice_id",
+        page.map((row) => row.id),
+      )
+      .order("submitted_at", { ascending: false });
+    if (paymentError) {
+      throw new Error("Creator invoice history is unavailable.");
+    }
+    for (const payment of paymentRows ?? []) {
+      if (!latestPaymentState.has(payment.invoice_id)) {
+        latestPaymentState.set(payment.invoice_id, payment.state);
+      }
+    }
+  }
   const context = applicationContext();
   return {
-    items: page.map((row) => toCreatorInvoiceItem({ row, ...context })),
+    items: page.map((row) =>
+      toCreatorInvoiceItem({
+        row,
+        ...context,
+        latestPaymentState: latestPaymentState.get(row.id),
+      }),
+    ),
     nextCursor: rows.length > historyLimit ? encodeCursor(page.at(-1)!) : null,
   };
 }

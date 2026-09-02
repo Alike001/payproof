@@ -41,9 +41,14 @@ function isOverdue(row: InvoiceRow, today: string): boolean {
   return row.lifecycle === "open" && row.due_date < today;
 }
 
-function creatorStatus(row: InvoiceRow, today: string): InvoiceStatus {
+function creatorStatus(
+  row: InvoiceRow,
+  today: string,
+  latestPaymentState?: string | null,
+): InvoiceStatus {
   if (row.lifecycle === "cancelled") return "cancelled";
   if (row.lifecycle === "verified") return "verified";
+  if (latestPaymentState === "mismatch") return "mismatch";
   return isOverdue(row, today) ? "overdue" : "open";
 }
 
@@ -55,6 +60,7 @@ export function toCreatorInvoiceItem(input: {
   row: InvoiceRow;
   appUrl: string;
   today: string;
+  latestPaymentState?: string | null;
 }): CreatorInvoiceItem {
   const currency = supportedCurrency(input.row.currency);
   return {
@@ -67,7 +73,11 @@ export function toCreatorInvoiceItem(input: {
     localAmountFormatted: formatLocalAmount(amountMinor(input.row), currency),
     currency,
     dueDate: input.row.due_date,
-    status: creatorStatus(input.row, input.today),
+    status: creatorStatus(
+      input.row,
+      input.today,
+      input.latestPaymentState,
+    ),
     canCancel: input.row.lifecycle === "open",
     createdAt: input.row.created_at,
   };

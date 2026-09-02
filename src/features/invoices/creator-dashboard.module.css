@@ -227,6 +227,18 @@
   border: 1px solid #86efac;
 }
 
+.mismatchNotice {
+  margin: -4px 0 14px;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fff7f7;
+  color: #991b1b;
+  padding: 9px 11px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
 .description {
   margin: 0 0 14px;
   font-size: 0.9rem;

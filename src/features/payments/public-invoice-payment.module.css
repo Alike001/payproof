@@ -1065,6 +1065,21 @@
   flex-wrap: wrap;
 }
 
+.mismatchRetryNotice {
+  margin-top: 18px;
+  border: 1px solid #fca5a5;
+  border-radius: 12px;
+  background: #fff7f7;
+  color: #7f1d1d;
+  padding: 12px 14px;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.mismatchRetryNotice strong {
+  color: #991b1b;
+}
+
 .tryAgainButton {
   min-height: 44px;
   border-radius: 12px;

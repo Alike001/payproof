@@ -29,6 +29,12 @@ function StatusBadge({ status }: { status: PublicInvoiceStatus }) {
           Cancelled
         </span>
       );
+    case "mismatch":
+      return (
+        <span className={`${styles.badge} ${styles.badgeMismatch}`}>
+          ⚠ Payment Mismatch
+        </span>
+      );
     case "verified":
       return (
         <span className={`${styles.badge} ${styles.badgeVerified}`}>
@@ -117,8 +123,14 @@ export function PublicInvoiceCard({
   }
 
   const { invoice } = state;
-  const displayedStatus =
-    locallyVerifiedPublicId === invoice.publicId ? "verified" : invoice.status;
+  const displayedStatus: PublicInvoiceStatus =
+    locallyVerifiedPublicId === invoice.publicId
+      ? "verified"
+      : invoice.status === "cancelled" || invoice.status === "verified"
+        ? invoice.status
+        : state.payment?.state === "mismatch"
+          ? "mismatch"
+          : invoice.status;
 
   async function handleShare() {
     setFeedbackMessage(null);

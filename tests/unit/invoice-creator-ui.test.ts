@@ -119,4 +119,13 @@ describe("Invoice Creator Presentation Contracts", () => {
     expect(dashboard).not.toContain("Fallback UI state update");
     expect(dashboard).toContain("The invoice remains open");
   });
+
+  it("contains wide invoice evidence inside the mobile workspace grid", () => {
+    const workspaceStyles = readFileSync(
+      join(process.cwd(), "src/components/workspace-shell.module.css"),
+      "utf8",
+    );
+
+    expect(workspaceStyles).toMatch(/\.main\s*>\s*\*\s*\{\s*min-width:\s*0;\s*\}/);
+  });
 });

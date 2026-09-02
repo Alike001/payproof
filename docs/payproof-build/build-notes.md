@@ -792,3 +792,29 @@ is claimed until Abu routes this checkpoint through the agreed PR process.
   `/home/ali/Desktop/payproof-live-wrong-amount-mismatch.png`.
 - Item 9 is complete. Review Gate 3 is now active: Abu must review the exact and
   mismatch evidence plus the 30-second product story before item 10 begins.
+
+## 2026-09-03 — Review Gate 3 mismatch-status correction
+
+- Abu's review correctly identified that a terminal mismatched payment and an
+  open invoice are separate facts. The invoice must remain payable, but showing
+  only `Open` hid the most useful current status and conflicted with the accepted
+  compound-state resolution.
+- Public invoice headers and creator-history cards now surface `Payment
+  Mismatch` / `Mismatch` while retaining the open invoice's retry and cancel
+  capabilities. Creator history reads the latest payment state through the
+  creator-scoped payments RLS policy; cancelled and verified invoice lifecycles
+  still take precedence.
+- The retry action now says `Retry with the exact payment` and explicitly warns
+  that the earlier transfer was not reversed, is not combined toward settlement,
+  and cannot be refunded by PayProof. This keeps the deliberately excluded
+  partial-payment/refund behavior honest.
+- Rendered Playwright QA used the real mismatched invoice at 1440x1000 and
+  390x844. Both views showed the mismatch header and warning, omitted Awaiting
+  Payment and Verified Receipt, opened no dialog, and reported no application
+  console errors or failed requests. The first mobile pass exposed grid
+  min-content overflow from the comparison table; constraining workspace grid
+  children fixed it while preserving the table's local horizontal scrolling.
+- `npm run check` passed with warning-free lint, strict TypeScript, 187 passing
+  tests (24 live/opt-in tests skipped), and a successful optimized production
+  build. Review Gate 3 remains open until Abu confirms the corrected real public
+  invoice and creator dashboard presentation.

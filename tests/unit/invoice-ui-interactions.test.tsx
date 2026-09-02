@@ -182,6 +182,28 @@ describe("Invoice UI Interaction Regression Coverage", () => {
     );
   });
 
+  it("shows a payment mismatch in the public invoice header", async () => {
+    await act(async () => {
+      root?.render(
+        <PublicInvoiceCard
+          state={{
+            ...sampleReadyState,
+            payment: {
+              ...sampleSubmittedPayment,
+              state: "mismatch",
+              code: "WRONG_AMOUNT",
+              message: "The transfer amount does not match.",
+              retryable: false,
+            },
+          }}
+        />,
+      );
+    });
+
+    expect(container?.textContent).toContain("Payment Mismatch");
+    expect(container?.textContent).not.toContain("Awaiting Payment");
+  });
+
   it("1. falls back from unavailable/failed native Share API to clipboard copy", async () => {
     const writeTextMock = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, "clipboard", {

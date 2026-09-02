@@ -1164,6 +1164,14 @@ export function PublicInvoicePayment({
             </a>
           </div>
 
+          <div className={styles.mismatchRetryNotice} role="note">
+            <strong>This invoice is still unpaid.</strong> The earlier transfer
+            was not reversed or counted toward settlement. PayProof does not
+            combine partial payments or issue refunds. Confirm with the payee
+            before retrying, then send one payment that matches every invoice
+            requirement exactly.
+          </div>
+
           <div className={styles.mismatchActionsRow}>
             {invoice.status === "open" || invoice.status === "overdue" ? (
               <button
@@ -1176,7 +1184,7 @@ export function PublicInvoicePayment({
                 }}
                 type="button"
               >
-                Pay this invoice again →
+                Retry with the exact payment →
               </button>
             ) : null}
           </div>

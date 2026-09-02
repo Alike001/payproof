@@ -175,6 +175,13 @@ export function CreatorDashboard({
 
               <p className={styles.description}>{item.description}</p>
 
+              {item.status === "mismatch" ? (
+                <p className={styles.mismatchNotice}>
+                  A payment did not match this invoice. It remains open for one
+                  exact payment.
+                </p>
+              ) : null}
+
               <div className={styles.metaRow}>
                 <div className={styles.metaCol}>
                   <span className={styles.metaLabel}>Amount</span>

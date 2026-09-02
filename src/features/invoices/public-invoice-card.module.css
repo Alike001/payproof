@@ -101,6 +101,12 @@
   border: 1px solid #cbd5e1;
 }
 
+.badgeMismatch {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+}
+
 .badgeVerified {
   background: #dcfce7;
   color: #15803d;

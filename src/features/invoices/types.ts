@@ -11,6 +11,7 @@ export type PublicInvoiceStatus =
   | "open"
   | "overdue"
   | "cancelled"
+  | "mismatch"
   | "verified";
 
 export type CreateInvoiceInput = {

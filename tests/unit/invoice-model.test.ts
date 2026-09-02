@@ -72,6 +72,26 @@ describe("invoice DTO mapping", () => {
     ).toMatchObject({ status: "verified", canCancel: false });
   });
 
+  it("surfaces the latest mismatch while keeping an open invoice cancellable", () => {
+    expect(
+      toCreatorInvoiceItem({
+        row,
+        appUrl: "https://payproof.example",
+        today: "2026-09-02",
+        latestPaymentState: "mismatch",
+      }),
+    ).toMatchObject({ status: "mismatch", canCancel: true });
+
+    expect(
+      toCreatorInvoiceItem({
+        row: { ...row, lifecycle: "verified", verified_at: row.created_at },
+        appUrl: "https://payproof.example",
+        today: "2026-09-02",
+        latestPaymentState: "mismatch",
+      }).status,
+    ).toBe("verified");
+  });
+
   it("exposes only the accepted public invoice fields", () => {
     const invoice = toPublicInvoiceDto({
       row,
