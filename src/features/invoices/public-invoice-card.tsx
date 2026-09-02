@@ -6,6 +6,7 @@ import type {
   PublicInvoicePageState,
   PublicInvoiceStatus,
 } from "@/features/invoices/types";
+import { PublicInvoicePayment } from "@/features/payments/public-invoice-payment";
 import styles from "./public-invoice-card.module.css";
 
 function StatusBadge({ status }: { status: PublicInvoiceStatus }) {
@@ -247,16 +248,7 @@ export function PublicInvoiceCard({
       </div>
 
       {invoice.status === "open" || invoice.status === "overdue" ? (
-        <div className={styles.paymentSection}>
-          <h3>Client Payment Step</h3>
-          <p>
-            Connect your wallet to get a live 15-minute Telegraph FX quote and pay exact test USDC on Base Sepolia.
-          </p>
-          <div className={styles.paymentBox}>
-            <span>Network: Base Sepolia (84532)</span>
-            <span>Token: Official Test USDC</span>
-          </div>
-        </div>
+        <PublicInvoicePayment invoice={invoice} />
       ) : null}
     </section>
   );
