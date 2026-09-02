@@ -6,12 +6,17 @@ import type {
   PublicInvoicePageState,
   PublicInvoiceStatus,
 } from "@/features/invoices/types";
+import { PublicInvoicePayment } from "@/features/payments/public-invoice-payment";
 import styles from "./public-invoice-card.module.css";
 
 function StatusBadge({ status }: { status: PublicInvoiceStatus }) {
   switch (status) {
     case "open":
-      return <span className={`${styles.badge} ${styles.badgeOpen}`}>Awaiting Payment</span>;
+      return (
+        <span className={`${styles.badge} ${styles.badgeOpen}`}>
+          Awaiting Payment
+        </span>
+      );
     case "overdue":
       return (
         <span className={`${styles.badge} ${styles.badgeOverdue}`}>
@@ -142,7 +147,9 @@ export function PublicInvoiceCard({
       clearFeedbackAfter(3000);
     } catch {
       setCopied(false);
-      setFeedbackMessage("Could not copy link automatically. Copy from browser URL bar.");
+      setFeedbackMessage(
+        "Could not copy link automatically. Copy from browser URL bar.",
+      );
       clearFeedbackAfter(4000);
     }
   }
@@ -172,24 +179,30 @@ export function PublicInvoiceCard({
       </div>
 
       <p className={styles.privacyNotice}>
-        <strong>Public view:</strong> Anyone with this link can view this invoice. PayProof never exposes private emails, phone numbers, or passwords.
+        <strong>Public view:</strong> Anyone with this link can view this
+        invoice. PayProof never exposes private emails, phone numbers, or
+        passwords.
       </p>
 
       {invoice.status === "cancelled" ? (
         <div className={styles.cancelledBanner} role="alert">
-          <strong>Invoice Cancelled:</strong> The creator cancelled this invoice. Payment is permanently disabled. Please do not send test funds.
+          <strong>Invoice Cancelled:</strong> The creator cancelled this
+          invoice. Payment is permanently disabled. Please do not send test
+          funds.
         </div>
       ) : null}
 
       {invoice.status === "overdue" ? (
         <div className={styles.overdueBanner} role="status">
-          <strong>Past Due Date:</strong> This invoice passed its due date ({invoice.dueDate}) but remains open for payment.
+          <strong>Past Due Date:</strong> This invoice passed its due date (
+          {invoice.dueDate}) but remains open for payment.
         </div>
       ) : null}
 
       {invoice.status === "verified" ? (
         <div className={styles.verifiedBanner} role="status">
-          <strong>Verified Receipt:</strong> Payment for this invoice has been confirmed on Base Sepolia by Telegraph intelligence.
+          <strong>Verified Receipt:</strong> Payment for this invoice has been
+          confirmed on Base Sepolia by Telegraph intelligence.
         </div>
       ) : null}
 
@@ -202,7 +215,9 @@ export function PublicInvoiceCard({
         {invoice.clientReference ? (
           <div className={styles.detailRow}>
             <span className={styles.detailLabel}>Client Reference</span>
-            <span className={styles.detailValue}>{invoice.clientReference}</span>
+            <span className={styles.detailValue}>
+              {invoice.clientReference}
+            </span>
           </div>
         ) : null}
 
@@ -213,7 +228,9 @@ export function PublicInvoiceCard({
 
         <div className={styles.detailRow}>
           <span className={styles.detailLabel}>Invoice Amount</span>
-          <span className={styles.detailAmount}>{invoice.localAmountFormatted}</span>
+          <span className={styles.detailAmount}>
+            {invoice.localAmountFormatted}
+          </span>
         </div>
 
         <div className={styles.detailRow}>
@@ -223,7 +240,10 @@ export function PublicInvoiceCard({
 
         <div className={styles.detailRow}>
           <span className={styles.detailLabel}>Recipient Address</span>
-          <span className={styles.detailMonospace} title={invoice.recipientAddress}>
+          <span
+            className={styles.detailMonospace}
+            title={invoice.recipientAddress}
+          >
             {invoice.recipientDisplay || invoice.recipientAddress}
           </span>
         </div>
@@ -240,23 +260,20 @@ export function PublicInvoiceCard({
           </button>
         </div>
         {feedbackMessage ? (
-          <div className={styles.feedbackText}>
-            {feedbackMessage}
-          </div>
+          <div className={styles.feedbackText}>{feedbackMessage}</div>
         ) : null}
       </div>
 
       {invoice.status === "open" || invoice.status === "overdue" ? (
-        <div className={styles.paymentSection}>
-          <h3>Client Payment Step</h3>
-          <p>
-            Connect your wallet to get a live 15-minute Telegraph FX quote and pay exact test USDC on Base Sepolia.
-          </p>
-          <div className={styles.paymentBox}>
-            <span>Network: Base Sepolia (84532)</span>
-            <span>Token: Official Test USDC</span>
-          </div>
-        </div>
+        <PublicInvoicePayment
+          invoice={invoice}
+          initialPayment={state.payment}
+          key={
+            state.payment
+              ? `${state.payment.paymentId}:${state.payment.state}`
+              : "unpaid"
+          }
+        />
       ) : null}
     </section>
   );

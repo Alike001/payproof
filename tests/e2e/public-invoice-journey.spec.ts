@@ -207,6 +207,9 @@ test("Item 6 public invoice browser journey and responsive proof", async ({
     data = fixture;
 
     await withExternalChrome(viewport, async (page) => {
+      const quotedAt = new Date();
+      const expiresAt = new Date(quotedAt.getTime() + 15 * 60 * 1_000);
+
       await page.addInitScript(() => {
         Object.defineProperty(navigator, "share", {
           configurable: true,
@@ -217,6 +220,40 @@ test("Item 6 public invoice browser journey and responsive proof", async ({
           value: { writeText: () => Promise.resolve() },
         });
       });
+
+      await page.route(
+        `**/api/invoices/${fixture.openPublicId}/quote`,
+        async (route) => {
+          expect(route.request().method()).toBe("POST");
+          await route.fulfill({
+            contentType: "application/json",
+            status: 200,
+            body: JSON.stringify({
+              ok: true,
+              reused: true,
+              quote: {
+                quoteId: "88888888-8888-4888-8888-888888888888",
+                sourceCurrency: "NGN",
+                targetCurrency: "USD",
+                localAmountFormatted: "₦750,000.00",
+                rateToUsd: "0.000666666666666667",
+                usdcAmountUnits: "500000000",
+                usdcAmountFormatted: "500.000000",
+                quotedAt: quotedAt.toISOString(),
+                expiresAt: expiresAt.toISOString(),
+                sourceObservedAt: quotedAt.toISOString(),
+                source: {
+                  kind: "telegraph_fx",
+                  name: "Structured FX feed",
+                  minerId: "20260827",
+                  minerName: "FX Rate Mirror",
+                  attemptRole: "primary",
+                },
+              },
+            }),
+          });
+        },
+      );
 
       const notFoundResponse = await page.goto(
         `${baseURL}/i/invalid-public-id-999`,
@@ -254,12 +291,24 @@ test("Item 6 public invoice browser journey and responsive proof", async ({
       await expect(
         page.getByText("Quantum Computing Consultation & Architecture"),
       ).toBeVisible();
-      await expect(page.getByText("₦750,000.00")).toBeVisible();
+      await expect(
+        page.getByText("₦750,000.00", { exact: true }).first(),
+      ).toBeVisible();
       await expect(page.getByText("2026-10-15")).toBeVisible();
       await expect(page.getByText("0x1234…5678")).toBeVisible();
       await expect(
         page.getByRole("heading", { name: "Client Payment Step" }),
       ).toBeVisible();
+      await expect(
+        page.getByText("500.000000 test USDC", { exact: true }),
+      ).toBeVisible();
+      await expect(
+        page.getByText("1 NGN = 0.000666666666666667 USD"),
+      ).toBeVisible();
+      await expect(page.getByText(/FX Rate Mirror \[primary\]/)).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: "Connect wallet to pay" }),
+      ).toBeDisabled();
 
       const content = await page.content();
       expect(content).not.toContain(fixture.userId);

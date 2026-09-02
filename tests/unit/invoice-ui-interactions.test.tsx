@@ -9,6 +9,10 @@ import type {
   PublicInvoicePageState,
 } from "@/features/invoices/types";
 
+vi.mock("@/features/payments/public-invoice-payment", () => ({
+  PublicInvoicePayment: () => <div>Client Payment Step</div>,
+}));
+
 let container: HTMLDivElement | null = null;
 let root: Root | null = null;
 let originalClipboardDescriptor: PropertyDescriptor | undefined;
@@ -172,7 +176,9 @@ describe("Invoice UI Interaction Regression Coverage", () => {
     });
 
     expect(shareBtn.textContent).not.toContain("Link Copied!");
-    expect(container?.textContent).toContain("Could not copy link automatically");
+    expect(container?.textContent).toContain(
+      "Could not copy link automatically",
+    );
 
     Object.defineProperty(navigator, "clipboard", {
       value: undefined,
@@ -185,7 +191,9 @@ describe("Invoice UI Interaction Regression Coverage", () => {
     });
 
     expect(shareBtn.textContent).not.toContain("Link Copied!");
-    expect(container?.textContent).toContain("Could not copy link automatically");
+    expect(container?.textContent).toContain(
+      "Could not copy link automatically",
+    );
   });
 
   it("4. does not fall back to clipboard or claim success when native Share throws AbortError", async () => {
@@ -238,7 +246,10 @@ describe("Invoice UI Interaction Regression Coverage", () => {
     // Sub-case A: No cancellation action supplied
     await act(async () => {
       root?.render(
-        <CreatorDashboard items={[item]} recipientAddress="0x1234567890abcdef" />,
+        <CreatorDashboard
+          items={[item]}
+          recipientAddress="0x1234567890abcdef"
+        />,
       );
     });
 
@@ -298,9 +309,7 @@ describe("Invoice UI Interaction Regression Coverage", () => {
     expect(container?.textContent).toContain("Open");
 
     // Sub-case C: Cancellation action throws an error
-    const throwingCancel = vi
-      .fn()
-      .mockRejectedValue(new Error("Server error"));
+    const throwingCancel = vi.fn().mockRejectedValue(new Error("Server error"));
     await act(async () => {
       root?.render(
         <CreatorDashboard
@@ -372,9 +381,9 @@ describe("Invoice UI Interaction Regression Coverage", () => {
     const articles = container?.querySelectorAll("article");
     expect(articles?.length).toBe(2);
 
-    const card1Cancel = Array.from(articles![0].querySelectorAll("button")).find(
-      (b) => b.textContent?.includes("Cancel"),
-    );
+    const card1Cancel = Array.from(
+      articles![0].querySelectorAll("button"),
+    ).find((b) => b.textContent?.includes("Cancel"));
     await act(async () => {
       card1Cancel?.click();
     });
@@ -402,7 +411,9 @@ describe("Invoice UI Interaction Regression Coverage", () => {
     const nameInput = container?.querySelector(
       "input[id*='freelancerName']",
     ) as HTMLInputElement;
-    const descInput = container?.querySelector("textarea") as HTMLTextAreaElement;
+    const descInput = container?.querySelector(
+      "textarea",
+    ) as HTMLTextAreaElement;
     const amountInput = container?.querySelector(
       "input[id*='amount']",
     ) as HTMLInputElement;
@@ -469,8 +480,12 @@ describe("Invoice UI Interaction Regression Coverage", () => {
     const clientInput = container?.querySelector(
       "input[id*='clientReference']",
     ) as HTMLInputElement;
-    const descInput = container?.querySelector("textarea") as HTMLTextAreaElement;
-    const currencySelect = container?.querySelector("select") as HTMLSelectElement;
+    const descInput = container?.querySelector(
+      "textarea",
+    ) as HTMLTextAreaElement;
+    const currencySelect = container?.querySelector(
+      "select",
+    ) as HTMLSelectElement;
     const amountInput = container?.querySelector(
       "input[id*='amount']",
     ) as HTMLInputElement;
