@@ -481,3 +481,36 @@ is claimed until Abu routes this checkpoint through the agreed PR process.
   test helper starts system Chrome with an isolated disposable profile and uses
   Playwright's supported CDP connection. Both initial fail-closed public-route
   smoke tests pass, and the helper removes its profile after every run.
+
+## 2026-09-02 — Item 7 lead quote foundation
+
+- Added a server-only quote service and strict `POST
+  /api/invoices/{publicId}/quote` boundary. It accepts no caller-supplied money,
+  Miner, or rate fields, rejects non-open invoices, and returns only sanitized
+  exact-string DTOs.
+- USD invoices use the declared nominal `1 USD = 1 test USDC` rule without a
+  Telegraph request. NGN, EUR, and GBP call the validated primary/backup FX
+  service, store the paid Telegraph call ID and sanitized Miner provenance, and
+  calculate six-decimal test-USDC units with Decimal.js rather than JavaScript
+  floating-point arithmetic.
+- Current quotes are read through a privileged database function that casts
+  bigint/numeric values to text before PostgREST serialization. Valid quotes are
+  reused until the exclusive 15-minute boundary; the database-backed endpoint
+  limit permits six requests per invoice and daily network hash each minute,
+  while a ten-second paid-attempt cooldown prevents rapid repeated Miner spend.
+- The browser boundary validates the complete success/error payload and fails
+  closed on malformed responses. Raw network addresses are never persisted;
+  the rate limiter receives only a daily rotating SHA-256 identifier.
+- Local database integration proved exact USD creation and reuse, exact NGN
+  conversion (`250000.00 NGN` to `160.307500` test USDC for the controlled
+  `0.00064123` rate), Miner provenance, atomic seventh-request rejection,
+  cooldown behavior, and cancelled-invoice rejection. Every disposable quote,
+  usage event, invoice, Telegraph-call fixture, and auth user was removed.
+- This foundation made no new paid Telegraph request and preserved the six
+  successful item 5 settlement records. Item 7 remains open until the teammate
+  supplies the quote presentation/countdown journey and a capped
+  production-style quote is compared with its stored evidence.
+- Final verification passed schema lint, all 36 pgTAP assertions, all five
+  opt-in local quote-service integrations, 132 normal application tests with 13
+  live/opt-in cases skipped, warning-free ESLint, strict TypeScript, and the
+  optimized Next.js production build.

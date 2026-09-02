@@ -360,6 +360,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      consume_quote_rate_limit: {
+        Args: {
+          p_invoice_id: string
+          p_limit?: number
+          p_network_hash: string
+          p_window_seconds?: number
+        }
+        Returns: {
+          allowed: boolean
+          retry_after_seconds: number
+        }[]
+      }
       finalize_verified_payment: {
         Args: {
           p_observed_amount_units: number
@@ -375,6 +387,26 @@ export type Database = {
           invoice_id: string
           outcome: string
           payment_id: string
+        }[]
+      }
+      read_current_quote: {
+        Args: { p_invoice_id: string; p_now: string }
+        Returns: {
+          attempt_role: string
+          expires_at: string
+          id: string
+          invoice_id: string
+          miner_id: string
+          miner_name: string
+          quoted_at: string
+          rate_decimal_text: string
+          source_amount_minor_text: string
+          source_currency: string
+          source_kind: string
+          source_name: string
+          source_observed_at: string
+          telegraph_call_id: string
+          usdc_amount_units_text: string
         }[]
       }
       reserve_telegraph_spend: {

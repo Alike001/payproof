@@ -27,13 +27,16 @@ const TRUVIAN_ID = "8453";
 const INTERLOCK_ID = "9007";
 const TRANSACTION_EVIDENCE_MAX_AGE_MS = 5 * 60 * 1_000;
 
-async function parsePaidResult<T>(input: {
+async function parsePaidResult<T extends object>(input: {
   call: () => ReturnType<typeof askTelegraphMiner>;
   parse: (body: unknown) => T;
-}): Promise<T> {
+}): Promise<T & { telegraphCallId: string }> {
   const response = await input.call();
   try {
-    return input.parse(response.body);
+    return {
+      ...input.parse(response.body),
+      telegraphCallId: response.callId,
+    };
   } catch (error) {
     if (error instanceof MinerAdapterError) {
       await markTelegraphCallInvalid({
@@ -64,7 +67,7 @@ export async function requestFxEvidence(input: {
   const attempt = (
     role: "primary" | "backup",
     minerId: string,
-  ): Promise<FxEvidence> => {
+  ): Promise<FxEvidence & { telegraphCallId: string }> => {
     if (minerId !== FX_RATE_MIRROR_ID && minerId !== PREFLIGHT_ID) {
       return Promise.reject(
         new Error(`No validated FX adapter is configured for Miner ${minerId}.`),
@@ -107,10 +110,13 @@ export async function requestFxEvidence(input: {
     });
   };
 
-  return runPrimaryBackup<FxEvidence>({
+  const result = await runPrimaryBackup<
+    FxEvidence & { telegraphCallId: string }
+  >({
     primary: () => attempt("primary", primaryMinerId),
     backup: () => attempt("backup", backupMinerId),
   });
+  return result;
 }
 
 export async function requestTransactionEvidence(input: {
@@ -130,7 +136,7 @@ export async function requestTransactionEvidence(input: {
   const attempt = (
     role: "primary" | "backup",
     minerId: string,
-  ): Promise<TransactionEvidence> => {
+  ): Promise<TransactionEvidence & { telegraphCallId: string }> => {
     if (minerId !== TRUVIAN_ID && minerId !== INTERLOCK_ID) {
       return Promise.reject(
         new Error(
@@ -175,8 +181,11 @@ export async function requestTransactionEvidence(input: {
     });
   };
 
-  return runPrimaryBackup<TransactionEvidence>({
+  const result = await runPrimaryBackup<
+    TransactionEvidence & { telegraphCallId: string }
+  >({
     primary: () => attempt("primary", primaryMinerId),
     backup: () => attempt("backup", backupMinerId),
   });
+  return result;
 }

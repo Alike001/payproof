@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(28);
+select plan(32);
 
 select has_table('public', 'invoices', 'invoices table exists');
 select has_table('public', 'quotes', 'quotes table exists');
@@ -59,6 +59,26 @@ select ok(
 select ok(
   not has_table_privilege('authenticated', 'public.invoices', 'update'),
   'authenticated browsers cannot bypass server-only invoice cancellation'
+);
+select has_function(
+  'public',
+  'read_current_quote',
+  array['uuid', 'timestamp with time zone'],
+  'exact current-quote reader exists'
+);
+select has_function(
+  'public',
+  'consume_quote_rate_limit',
+  array['uuid', 'text', 'integer', 'integer'],
+  'atomic quote endpoint rate limiter exists'
+);
+select ok(
+  not has_function_privilege('anon', 'public.read_current_quote(uuid,timestamp with time zone)', 'execute'),
+  'anonymous browsers cannot call the privileged quote reader'
+);
+select ok(
+  not has_function_privilege('authenticated', 'public.consume_quote_rate_limit(uuid,text,integer,integer)', 'execute'),
+  'authenticated browsers cannot forge quote rate-limit events'
 );
 
 select ok(
