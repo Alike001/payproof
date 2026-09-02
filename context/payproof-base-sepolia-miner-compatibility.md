@@ -19,6 +19,86 @@ direct calls do not count toward Miner request-volume requirements.
 
 No x402 payment was made during these probes.
 
+### 2026-09-01 paid Engine compatibility spike
+
+PayProof configured and funded a disposable service wallet, then exercised one
+capped NGN call through the official direct Engine route for FX Rate Mirror
+`20260827`. The request envelope was:
+
+```json
+{
+  "method": "GET",
+  "endpoint": "/rate",
+  "payload": { "from": "NGN", "to": "USD" }
+}
+```
+
+The unpaid response supplied the expected x402 v2 `exact` challenge for
+`eip155:84532`, official Circle Base Sepolia USDC, and `10000` base units. The
+paid retry used an EIP-3009 `TransferWithAuthorization` signature, the domain
+name/version from the challenge, a 30-second backward clock allowance, a
+five-minute validity window, and Telegraph's documented compatibility envelope
+with top-level `scheme` and `network` fields. The private key, signature,
+authorization, and raw payment header were never logged or persisted.
+
+Two controlled attempts failed closed:
+
+- the first reached PayProof's original 10-second response timeout;
+- the second, with a documented 30-second devnet timeout, returned HTTP 402
+  after about 19.7 seconds with no response body or settlement proof.
+
+Both attempts were recorded as `paid_error`. The service-wallet balance stayed
+at exactly 20 test USDC and no settlement transaction was stored. No further
+paid retries should be made until the Telegraph team reviews the sanitized
+request shape and server-side payment-verification logs. This is a current
+Engine/x402 integration blocker, not proof that the Miner adapter itself is
+invalid; the Miner's read-only public endpoint still returns structured data
+that passes PayProof's strict adapter.
+
+### Post-spike official integration-guide correction
+
+After the paid spike, Telegraph published/promoted its official **Integrate
+Out** page and the updated **Paying with x402** guide. Context7 has no matching
+entry for Telegraph Protocol, so the official site, official docs repository,
+and Telegraph-owned example repository were checked directly.
+
+#### Verified facts
+
+- Auto-routing remains `POST /engine/v1/ask` with a natural-language query.
+- A specific Miner remains `POST /engine/v1/ask/:subnet_id` with
+  `{ method, endpoint, payload }`; this confirms PayProof's corrected request
+  envelopes.
+- The x402 guide says to use the official `@x402/*` client rather than manually
+  construct the EIP-712 payload. It warns that malformed payloads receive a bare
+  HTTP 402 that is indistinguishable from an unpaid request.
+- The guide's standard flow retries the exact same request with the library's
+  base64 `PAYMENT-SIGNATURE` and reads `PAYMENT-RESPONSE` as settlement proof.
+- Telegraph's official example applications use `x402Client`, register an exact
+  chain scheme, and wrap or encode fetch through the standard x402 packages.
+- The integration page currently mentions `GET /engine/v1/miners`, while the
+  more detailed x402 guide identifies `GET /api/miners` as the live discovery
+  source. PayProof should keep using the endpoint proven against the live node
+  and treat this documentation difference as an open question.
+
+#### Implementation inference
+
+PayProof's first standard-library paid retry reached Miner endpoint validation
+and returned the precise undeclared-endpoint error. That is evidence the node
+accepted its payment payload before rejecting the old request shape. The later
+bare 402 responses appeared only after a custom compatibility envelope was
+introduced. PayProof therefore removes the hand-built envelope and restores the
+standard x402 payload generator/encoder while retaining its separate pre-sign
+origin, network, asset, amount, atomic-budget, and idempotency gates.
+
+#### Remaining unknown
+
+The organizer reported that the server-side issue was resolved. A controlled
+NGN retry then obtained the unpaid challenge but stopped before payment signing
+because PayProof could not reserve the spend without its Supabase admin
+configuration and atomic spend-ledger migration. No paid retry was submitted.
+Live compatibility remains unproven until the database-backed reservation path
+is configured and the controlled retry completes without bypassing that guard.
+
 ### 2026-09-01 unpaid x402 recheck
 
 An unpaid `POST https://devnode.telegraphprotocol.com/engine/v1/ask/8453`
@@ -30,6 +110,41 @@ prefix removed. PayProof therefore permits only this narrowly matched same-host
 rewrite while requiring the actual outbound request and configured node origin
 to use HTTPS. A different host, Miner path, query, fragment, network, or asset
 still fails before signing. No payment signature was created or submitted.
+
+### 2026-09-01 paid recheck after organizer resolution
+
+The standard `@x402/*` flow subsequently passed paid, strictly parsed calls for:
+
+- FX Rate Mirror `20260827`: NGN/USD and GBP/USD;
+- PREFLIGHT `20260828`: NGN/USD backup evidence;
+- Truvian `8453`: the known Base Sepolia transaction; and
+- INTERLOCK `9007`: the same known Base Sepolia transaction.
+
+Each successful call charged 10,000 test-USDC base units and persisted a Base
+Sepolia settlement transaction plus Telegraph signal hash. Both transaction
+Miners reported chain 84532, successful mined status, and official-USDC transfer
+evidence that passed the independent adapter checks.
+
+The EUR/USD call to FX Rate Mirror reached the paid retry but returned a bare
+HTTP 402 after roughly 20.5 seconds. PayProof persisted it as `paid_error` with
+no settlement transaction and stopped further paid retries. This is now a
+narrow EUR recurrence rather than the previous all-call integration failure;
+live EUR acceptance remained outstanding at the end of the 2026-09-01 run.
+
+### 2026-09-02 controlled EUR resolution
+
+After the Telegraph administrator reconfirmed the x402 route, PayProof retried
+only the EUR FX Rate Mirror case. The strict EUR/USD adapter and x402 settlement
+checks passed in 7.37 seconds. The sanitized ledger record is `paid_success` on
+`eip155:84532`, charged `10000` test-USDC base units, and stores settlement
+transaction
+`0x5bfa22d2ef2858967b0671b5cec716597d124eb63602d20215095b25c79fb225`.
+
+All six required paid smoke paths have now passed: NGN, EUR, and GBP through FX
+Rate Mirror; NGN through the Preflight backup; and the known Base Sepolia test
+USDC transaction through Truvian and INTERLOCK. Their persisted paid total is
+`60000` test-USDC base units (`0.06` test USDC). The earlier failed EUR attempt
+has no settlement transaction and is not counted as a successful paid call.
 
 ## Evidence Boundaries
 
@@ -170,6 +285,31 @@ still use direct x402 requests, and the application project will be judged.
 ## Current Decision
 
 PayProof remains viable.
+
+### 2026-09-01 epoch-299 adapter recheck
+
+The live Miner catalog still lists all four PayProof adapters as active. In the
+epoch-299 snapshot, FX Rate Mirror ranked 5 for `CURRENCY_EXCHANGE`, Preflight
+ranked 4, Truvian ranked 8 for `ONCHAIN_TX_LOOKUP`, and INTERLOCK ranked 6.
+Rank alone remains insufficient: PayProof keeps these Miners because their
+current structured response contracts fit the product's exact decision rules.
+
+Read-only calls to each Miner's published base URL reconfirmed the adapter
+shapes before any Telegraph payment:
+
+- FX Rate Mirror returned fresh structured NGN/USD `0.000748`, EUR/USD `1.16`,
+  and GBP/USD `1.35` values with timestamps and all four source checks passing.
+- Preflight returned NGN/USD `0.000747537` in its structured decimal field,
+  plus a current check timestamp and a separate upstream `as_of` timestamp.
+- Truvian and INTERLOCK independently returned chain `84532`, the known hash,
+  successful block `46236673`, and official-USDC transfers of `500000` and
+  `2500` base units.
+
+Sanitized captures of only the fields trusted by PayProof live under
+`tests/fixtures/telegraph/`. These calls prove current parsing compatibility,
+not validator consensus by themselves. The separate paid opt-in smoke suite
+has now passed all six required paths and supplies the x402 settlement evidence
+for review gate 2.
 
 Use:
 

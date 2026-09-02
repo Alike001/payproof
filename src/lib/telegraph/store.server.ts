@@ -64,3 +64,25 @@ export const telegraphSpendStore: TelegraphSpendStore = {
     }
   },
 };
+
+export async function markTelegraphCallInvalid(input: {
+  callId: string;
+  errorCode: string;
+  errorMessage: string;
+}): Promise<void> {
+  const { data, error } = await getAdminDatabaseClient()
+    .from("telegraph_calls")
+    .update({
+      status: "paid_invalid",
+      error_code: input.errorCode.slice(0, 100),
+      error_message: input.errorMessage.slice(0, 500),
+      completed_at: new Date().toISOString(),
+    })
+    .eq("id", input.callId)
+    .eq("status", "paid_success")
+    .select("id")
+    .maybeSingle();
+  if (error || !data) {
+    throw new Error("Unable to mark invalid Telegraph evidence.");
+  }
+}

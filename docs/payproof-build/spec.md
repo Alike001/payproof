@@ -562,8 +562,8 @@ unavailable or invalid evidence, not outcome shopping.
 
 ### Timeouts and retries
 
-- Per-Miner timeout: 10 seconds.
-- Overall primary-plus-backup budget: 25 seconds.
+- Per-Miner timeout: 30 seconds on the Telegraph hackathon devnet.
+- Overall primary-plus-backup budget: 65 seconds.
 - No library-level blind retry after a possibly paid request.
 - Quote retry cooldown: 10 seconds when no valid quote exists.
 - Verification retry cooldown: 15 seconds after `unavailable`.

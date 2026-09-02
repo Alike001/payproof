@@ -1,0 +1,23 @@
+{
+  "miner_id": "20260828",
+  "miner_name": "PREFLIGHT Infrastructure Signals",
+  "cost_usd": 0.01,
+  "duration_ms": 310,
+  "timestamp": "2026-09-01T13:40:30.500Z",
+  "result": {
+    "query": "NGN/USD",
+    "amount": 1,
+    "source": "open.er-api.com",
+    "confidence": 1,
+    "checked_at": "2026-09-01T13:40:30.234Z",
+    "base": "NGN",
+    "quote": "USD",
+    "rate": 0.0007475366959615558,
+    "rate_formatted": "0.000747537",
+    "converted": 0.0007475366959615558,
+    "inverse_rate": 1337.726971,
+    "as_of": "2026-09-01T00:02:31.000Z",
+    "found": true,
+    "verdict": "found"
+  }
+}

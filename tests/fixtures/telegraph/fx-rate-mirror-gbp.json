@@ -1,0 +1,18 @@
+{
+  "miner_id": "20260827",
+  "miner_name": "FX Rate Mirror",
+  "cost_usd": 0.01,
+  "duration_ms": 250,
+  "timestamp": "2026-09-01T13:40:30.500Z",
+  "result": {
+    "rate": "1.35",
+    "pair": "GBP/USD",
+    "as_of": "2026-09-01T13:40:29Z",
+    "status": "ok",
+    "stale": false,
+    "source": "open.er-api.com",
+    "confidence": 1,
+    "checks_passed": 4,
+    "checks_total": 4
+  }
+}

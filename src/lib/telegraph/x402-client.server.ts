@@ -62,10 +62,10 @@ function createCodec(): X402Codec {
       );
     },
     async createPaymentHeaders(challenge) {
-      const payload = await httpClient.createPaymentPayload(
+      const payment = await httpClient.createPaymentPayload(
         challenge as PaymentRequired,
       );
-      return httpClient.encodePaymentSignatureHeader(payload);
+      return httpClient.encodePaymentSignatureHeader(payment);
     },
     parseSettlement(headers) {
       try {

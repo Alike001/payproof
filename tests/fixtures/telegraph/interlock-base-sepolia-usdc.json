@@ -1,0 +1,45 @@
+{
+  "miner_id": "9007",
+  "miner_name": "INTERLOCK On-Chain Transaction Lookup",
+  "cost_usd": 0.01,
+  "duration_ms": 390,
+  "timestamp": "2026-09-01T13:40:30.500Z",
+  "result": {
+    "schemaVersion": "1.1.0",
+    "resultVersion": "1.1.0",
+    "intent": "ONCHAIN_TX_LOOKUP",
+    "chainId": 84532,
+    "chainName": "Base Sepolia",
+    "txHash": "0xe48e753799e30db9d85d1c4ec627bfff0f4117cd7a8c2beb2f8f8b9a13dac7d2",
+    "exists": true,
+    "lifecycle": "mined",
+    "status": "success",
+    "blockNumber": 46236673,
+    "from": "0x6a53df5f32d0cbcc65c84e59d88a40c061b435f9",
+    "to": "0x572bf0fc198f0482bf55a789ceddff4f3b61f76b",
+    "transfers": [
+      {
+        "kind": "erc20",
+        "token": "0x036cbd53842c5426634e7929541ec2318f3dcf7e",
+        "from": "0x6a53df5f32d0cbcc65c84e59d88a40c061b435f9",
+        "to": "0x572bf0fc198f0482bf55a789ceddff4f3b61f76b",
+        "amount": "500000",
+        "logIndex": 3
+      },
+      {
+        "kind": "erc20",
+        "token": "0x036cbd53842c5426634e7929541ec2318f3dcf7e",
+        "from": "0x572bf0fc198f0482bf55a789ceddff4f3b61f76b",
+        "to": "0x2e78bcdcbf7ba1adc2252819d6134d6549960f3a",
+        "amount": "2500",
+        "logIndex": 4
+      }
+    ],
+    "observedAt": "2026-09-01T13:40:29.710Z",
+    "evidenceScope": {
+      "receipt": true,
+      "logs": true,
+      "erc20Transfers": true
+    }
+  }
+}

@@ -5,6 +5,10 @@ set local search_path = public, extensions;
 
 select plan(4);
 
+-- Isolate the daily-budget assertions from legitimate live smoke records. The
+-- surrounding transaction rolls these rows back after the test completes.
+delete from public.telegraph_calls;
+
 select is(
   (select reserved from public.reserve_telegraph_spend(
     'test-action', null, null, null, 'CURRENCY_EXCHANGE', 'miner-1',

@@ -311,3 +311,120 @@ The lead owns the identity extraction, session guard, Supabase provider setting,
 and wallet configuration. The teammate's review slice is the wording, 390px
 wallet affordances, and authenticated/signed-out screenshots; no teammate review
 is claimed until Abu routes this checkpoint through the agreed PR process.
+
+## 2026-09-01 — Deliberate Telegraph devnet timeout adjustment
+
+- The accepted specification originally limited each Miner request to 10
+  seconds. A controlled paid FX Rate Mirror request passed the unpaid challenge,
+  local spend reservation, and Telegraph-compatible EIP-3009 signing, but the
+  paid Engine response did not arrive before that boundary.
+- The call finalized locally as `paid_error`, stored no settlement transaction,
+  and the dedicated wallet remained at exactly 20 test USDC. This is evidence of
+  an unavailable request, not evidence of a paid or verified result.
+- PayProof will allow 30 seconds per live Telegraph request for the hackathon
+  devnet. This remains below the challenge's advertised 60-second maximum and
+  does not change the fail-closed evidence rules, per-call cap, daily budget, or
+  action idempotency.
+- The paid smoke test itself receives a slightly larger test-runner deadline so
+  the transport—not Vitest—owns the timeout decision. If the single controlled
+  retry still fails, paid retries stop until the Telegraph team reviews the
+  sanitized request shape and error.
+- The controlled 30-second retry returned HTTP 402 after about 19.7 seconds with
+  no response body or settlement proof. The dedicated wallet again remained at
+  exactly 20 test USDC. Paid retries are therefore stopped pending organizer
+  review; this checklist item and review gate 2 remain open.
+
+## 2026-09-01 — Official x402 guide correction
+
+- Telegraph's newly promoted integration guide explicitly warns that a
+  malformed hand-built payment payload returns a bare HTTP 402 and instructs
+  applications to use the standard `@x402/*` client.
+- The earlier standard-library attempt had reached Miner endpoint validation;
+  the bare 402 appeared only after the temporary custom payment envelope was
+  added. The custom signer/encoder has therefore been removed before checklist
+  item 5 is committed.
+- PayProof again uses `x402HTTPClient.createPaymentPayload` and
+  `encodePaymentSignatureHeader` with the registered Base Sepolia exact EVM
+  scheme. Its independent pre-sign origin/asset/network/cap checks, atomic daily
+  reservation, idempotency, redaction, and settlement validation are unchanged.
+- No additional paid request was made for this correction. The focused and full
+  local suites must pass before another organizer-directed live attempt.
+
+## 2026-09-01 — Organizer resolution and safe retry boundary
+
+- The Telegraph organizer reported that the server-side issue was resolved and
+  asked PayProof to report it if it recurs.
+- A single NGN FX Rate Mirror retry was started with the standard x402 client.
+  The unpaid challenge completed, but PayProof stopped before creating a payment
+  signature because the local Supabase admin configuration and atomic
+  `reserve_telegraph_spend` ledger are not available yet.
+- The result was `Unable to reserve the Telegraph spend safely.` No paid retry
+  was submitted and no test USDC was intentionally spent. PayProof will not
+  bypass the ledger; the next controlled attempt must follow database setup and
+  migration verification.
+
+## 2026-09-01 — Paid Miner spike after organizer resolution
+
+- PR #8 was merged into `main`; teammate Task 03 was moved from `blocked` to
+  `ready` with the accepted public-invoice DTO contract.
+- The local Supabase stack already had migrations 001–004 applied. The pgTAP
+  spend test was made independent of legitimate same-day live-call records by
+  deleting those rows only inside its rollback transaction; all four spend
+  assertions then passed without deleting the persisted evidence.
+- Standard x402 calls succeeded for FX Rate Mirror NGN and GBP, Preflight NGN,
+  Truvian Base Sepolia transaction lookup, and INTERLOCK Base Sepolia
+  transaction lookup. Every successful call cost 10,000 Base Sepolia USDC base
+  units, stored a settlement transaction, and passed its strict Miner adapter.
+- Both transaction Miners returned chain 84532, successful mined evidence, and
+  the expected known transaction with official-USDC transfer evidence. Neither
+  RPC data nor a transaction hash alone was used to declare that result valid.
+- FX Rate Mirror EUR reached the paid request but returned a bare HTTP 402 after
+  about 20.5 seconds. It was stored as `paid_error` with no settlement
+  transaction. Further paid retries stopped; checklist item 5 and review gate 2
+  remain open until the organizer reviews this recurrence or EUR succeeds in a
+  later controlled attempt.
+
+## 2026-09-01 — Checklist item 5 adapter audit
+
+- Compared the four strict Miner adapters with the accepted evidence rules
+  before review gate 2. The FX adapters already rejected wrong pairs, stale
+  observation times, non-decimal or non-positive rates, and incomplete primary
+  source checks.
+- Closed one fail-closed gap: FX Rate Mirror and Preflight now reject evidence
+  whose declared confidence is below `0.8`, matching the accepted specification.
+  Regression tests cover primary confidence `0.79` and backup confidence `0.5`.
+- Focused adapter tests, ESLint, and strict TypeScript passed after the change.
+  The remaining item 5 blocker is still the paid EUR FX Rate Mirror call; no
+  additional paid request was made during this audit.
+
+## 2026-09-01 — First public Track 3 progress update
+
+- Published PayProof's first X progress update and tagged `@Telegraphprotoc`:
+  <https://x.com/IamAlikeX/status/2094909102166094146>.
+- The post accurately describes the testnet-only product, its four local
+  currencies, Base Sepolia test USDC, Telegraph FX/on-chain intelligence, and
+  the five successful paid x402 checks completed so far.
+- Attached the current wallet-authentication product capture rather than a
+  mocked receipt or an unfinished payment claim. Later updates will cover the
+  working payment-to-verified-receipt moment and genuine tester usage.
+
+## 2026-09-02 — EUR paid retry and checklist item 5 completion
+
+- The Telegraph administrator reconfirmed that the x402 route was working and
+  asked PayProof to retry. The retry selected only the parameterized EUR case;
+  NGN, GBP, Preflight, Truvian, and INTERLOCK were explicitly skipped, so no
+  duplicate smoke spend occurred.
+- FX Rate Mirror `20260827` returned valid structured EUR/USD evidence in 7.37
+  seconds. The strict pair, freshness, positive-decimal, source-check,
+  confidence, Miner identity, and x402 settlement assertions all passed.
+- The sanitized spend ledger finalized the call as `paid_success` on
+  `eip155:84532` for `10000` test-USDC base units. Settlement transaction:
+  `0x5bfa22d2ef2858967b0671b5cec716597d124eb63602d20215095b25c79fb225`.
+- Across the required item 5 paths, six successful calls persisted six
+  settlement transactions and charged `60000` base units (`0.06` test USDC):
+  FX Rate Mirror NGN/EUR/GBP, Preflight NGN, Truvian transaction evidence, and
+  INTERLOCK transaction evidence.
+- The live worker's environment guard initially skipped twice without making a
+  request. The successful run passed `.env.local` values and the ephemeral
+  local Supabase service credential into one child process without printing or
+  persisting secrets. The temporary boolean-only diagnostic was removed.

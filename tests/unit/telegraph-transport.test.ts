@@ -195,7 +195,10 @@ describe("spend-safe Telegraph transport", () => {
     );
     expect(deps.fetcher).toHaveBeenCalledTimes(2);
     expect(deps.store.finalize).toHaveBeenCalledWith(
-      expect.objectContaining({ status: "paid_error" }),
+      expect.objectContaining({
+        status: "paid_error",
+        responseSanitized: { result: { found: true } },
+      }),
     );
   });
 

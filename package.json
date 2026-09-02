@@ -11,6 +11,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:live:telegraph": "RUN_LIVE_TELEGRAPH_TESTS=1 vitest run tests/live/telegraph-miners.live.test.ts",
     "supabase:start": "supabase start",
     "db:start": "supabase db start",
     "db:stop": "supabase stop",

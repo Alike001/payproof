@@ -208,6 +208,7 @@ export async function executeSpendSafeDirectAsk(
   }
 
   let paymentCreated = false;
+  let responseSanitized: unknown | null = null;
   try {
     let paymentHeaders: Record<string, string>;
     try {
@@ -233,6 +234,7 @@ export async function executeSpendSafeDirectAsk(
       input.timeoutMs,
     );
     const paidBody = await readJson(paidResponse);
+    responseSanitized = redactForPersistence(paidBody);
     if (!paidResponse.ok) {
       throw new TelegraphTransportError(
         "PAID_REQUEST_FAILED",
@@ -250,7 +252,7 @@ export async function executeSpendSafeDirectAsk(
     await dependencies.store.finalize({
       callId: reservation.callId,
       status: "paid_success",
-      responseSanitized: redactForPersistence(paidBody),
+      responseSanitized,
       errorCode: null,
       errorMessage: null,
       settlement,
@@ -268,7 +270,7 @@ export async function executeSpendSafeDirectAsk(
     await dependencies.store.finalize({
       callId: reservation.callId,
       status: paymentCreated ? "paid_error" : "unpaid_error",
-      responseSanitized: null,
+      responseSanitized,
       errorCode:
         error instanceof TelegraphTransportError ? error.code : "TRANSPORT_ERROR",
       errorMessage: safeErrorMessage(error),
