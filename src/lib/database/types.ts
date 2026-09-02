@@ -430,6 +430,28 @@ export type Database = {
           reserved: boolean
         }[]
       }
+      submit_payment_attempt: {
+        Args: {
+          p_limit?: number
+          p_network_hash: string
+          p_now: string
+          p_public_id: string
+          p_quote_id: string
+          p_submitted_by_wallet: string
+          p_tx_hash: string
+          p_window_seconds?: number
+        }
+        Returns: {
+          outcome: string
+          payment_id: string
+          payment_state: string
+          quote_id: string
+          retry_after_seconds: number
+          submitted_at: string
+          submitted_by_wallet: string
+          tx_hash: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

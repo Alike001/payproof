@@ -514,3 +514,40 @@ is claimed until Abu routes this checkpoint through the agreed PR process.
   opt-in local quote-service integrations, 132 normal application tests with 13
   live/opt-in cases skipped, warning-free ESLint, strict TypeScript, and the
   optimized Next.js production build.
+
+## 2026-09-02 — Item 8 lead payment-submission foundation
+
+- Added the minimal ERC-20 `transfer(address,uint256)` ABI and a pure transfer
+  request builder fixed to chain `84532` and official Base Sepolia test USDC.
+  Recipient and exact bigint units come only from sanitized server-issued
+  invoice/quote data; an expired quote or unsafe amount fails before the wallet
+  request is built.
+- Added the strict public payment-submission route and browser boundary. The
+  only accepted post-broadcast fields are quote ID, complete transaction hash,
+  and submitting wallet; caller-supplied token, chain, recipient, rate, or
+  amount fields are rejected.
+- Added a privileged atomic database submission function. It locks the invoice,
+  checks quote ownership and the exclusive expiry boundary, normalizes the hash,
+  returns an exact idempotent retry, rejects reuse across a different payment,
+  and permits only one submitted/unavailable attempt per invoice. The browser
+  has no direct write or function permission.
+- Payment-submission abuse is limited to six valid-format attempts per invoice
+  and daily network hash each minute. Rate-check events remain distinct from the
+  single `payment_submitted` event, so invalid requests cannot be presented as
+  successful adoption later.
+- Added a Base Sepolia receipt client for readiness only. It can report pending,
+  mined-success, mined-reverted, or RPC unavailable, but intentionally has no
+  `verified` outcome and performs no Transfer interpretation; only normalized
+  Telegraph evidence plus Item 9's exact verifier may finalize a receipt.
+- Four opt-in local database integrations proved create/reuse idempotency,
+  global transaction-hash protection, competing-payment rejection, exact quote
+  expiry, atomic endpoint limiting, and cancelled-invoice rejection. All
+  disposable users, invoices, quotes, payments, and usage events were removed.
+- No wallet transaction was broadcast in this foundation slice. Item 8 remains
+  open until the teammate connects the wallet UI and a small real Base Sepolia
+  test-USDC transfer proves that its hash is persisted immediately after
+  broadcast.
+- Final foundation verification passed schema lint, all 40 pgTAP assertions,
+  all four opt-in payment-service integrations, 144 normal application tests
+  with 17 live/opt-in cases skipped, warning-free ESLint, strict TypeScript,
+  and the optimized Next.js production build.

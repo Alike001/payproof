@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(32);
+select plan(36);
 
 select has_table('public', 'invoices', 'invoices table exists');
 select has_table('public', 'quotes', 'quotes table exists');
@@ -79,6 +79,32 @@ select ok(
 select ok(
   not has_function_privilege('authenticated', 'public.consume_quote_rate_limit(uuid,text,integer,integer)', 'execute'),
   'authenticated browsers cannot forge quote rate-limit events'
+);
+select has_function(
+  'public',
+  'submit_payment_attempt',
+  array['uuid', 'uuid', 'text', 'text', 'text', 'timestamp with time zone', 'integer', 'integer'],
+  'atomic payment-attempt submission exists'
+);
+select ok(
+  not has_function_privilege(
+    'anon',
+    'public.submit_payment_attempt(uuid,uuid,text,text,text,timestamp with time zone,integer,integer)',
+    'execute'
+  ),
+  'anonymous browsers cannot bypass the payment service'
+);
+select ok(
+  has_function_privilege(
+    'service_role',
+    'public.submit_payment_attempt(uuid,uuid,text,text,text,timestamp with time zone,integer,integer)',
+    'execute'
+  ),
+  'service role can submit a validated payment attempt'
+);
+select ok(
+  to_regclass('public.payments_one_pending_per_invoice_idx') is not null,
+  'only one pending payment is permitted per invoice'
 );
 
 select ok(
