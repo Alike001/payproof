@@ -2,7 +2,7 @@
 
 ## 1. Executive Summary & 30-Second Story
 
-> **Problem**: Global freelancers invoice in local currencies (NGN, EUR, GBP, USD), but cross-border clients want to pay stablecoins without friction. Current crypto invoicing relies on unverifiable screenshots, fake exchange rates, or custodial middlemen.
+> **Problem**: A freelancer and client can see that a wallet transaction happened, but a screenshot or raw transaction hash does not by itself prove that the correct invoice was paid using the expected chain, token, recipient, and amount.
 >
 > **Solution**: PayProof is a testnet invoicing application where a freelancer invoices in local currency, the client pays official test USDC directly on Base Sepolia, and Telegraph currency & transaction intelligence verifies the exact on-chain settlement before locking the URL into a permanent verified receipt.
 
@@ -11,8 +11,8 @@
 ## 2. Pre-Flight Preparation Checklist
 
 Complete these checks 15 minutes before the demo:
-- [ ] **Application Health**: Verify `/api/health` returns `{"status":"healthy","ready":true}`.
-- [ ] **Freelancer Wallet**: Disposable wallet funded with Base Sepolia test ETH for signing.
+- [ ] **Application Health**: Verify `/api/health` returns HTTP `200` with `status`, `database`, `telegraphConfig`, and `baseSepolia` all set to `"ready"`.
+- [ ] **Freelancer Wallet**: Disposable wallet available for the free sign-in signature. Creating an invoice does not require gas.
 - [ ] **Client Wallet**: Disposable wallet funded with Base Sepolia test ETH and official test USDC (`0x036CbD53842c5426634e7929541eC2318f3dCF7e`).
 - [ ] **Clean Browser Context**:
   - Window A (Freelancer): Desktop browser at `/invoices/new`.
@@ -74,8 +74,8 @@ Complete these checks 15 minutes before the demo:
 
 ### Phase 5 (Optional): Failure & Recovery Showcase (30s Bonus)
 - **Payment Mismatch Demo**:
-  - Show an invoice where observed payment was `400 test USDC` instead of `500 test USDC`.
-  - Highlight the side-by-side **Comparison Table** (`Expected` vs `Observed`), failed requirement breakdown, and **"Pay this invoice again"** recovery action.
+  - Show the recorded real mismatch where the quote required `0.037500 test USDC` and the transfer contained `0.037499 test USDC`.
+  - Highlight the side-by-side **Comparison Table** (`Expected` vs `Observed`), failed requirement breakdown, and **"Retry with the exact payment"** recovery action.
   - Explain: PayProof never issues a receipt for partial or invalid payments.
 
 ---
@@ -87,4 +87,4 @@ Complete these checks 15 minutes before the demo:
 | **Adoption & Real Usage** | 45% | Complete real journeys on Base Sepolia; honest funnel distinguishing internal developer tests from genuine external testers; consent-safe feedback. |
 | **Usefulness & Telegraph Depth** | 25% | Telegraph FX Miner directly controls payable amount; Telegraph transaction intelligence controls receipt issuance; paid x402 calls. |
 | **Project Updates & Communication** | 25% | Transparent technical progress, x402 settlement links, BaseScan explorer links, and honest failure recovery tagged `@Telegraphprotoc` on X. |
-| **Execution & Code Quality** | 5% | 100% test coverage (`npm run check` & Playwright passing), strict TypeScript, zero floating-point arithmetic, server-only secret isolation, responsive 320px/390px/desktop layout. |
+| **Execution & Code Quality** | 5% | All configured quality checks and real-route Playwright journeys pass; coverage is measured and reported separately without claiming 100%; strict TypeScript, integer/decimal money arithmetic, server-only secret isolation, and responsive 320px/390px/desktop layouts. |

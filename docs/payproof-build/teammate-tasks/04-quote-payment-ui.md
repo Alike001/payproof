@@ -8,7 +8,7 @@ items 7 and 8.
 
 ## Dependency
 
-Start after Task 03 is merged and Abu supplies stable quote/payment DTOs and
+Start after Task 03 is merged and Ali supplies stable quote/payment DTOs and
 actions backed by live Telegraph adapters. Never build against invented rates,
 transactions, or production mocks.
 
@@ -50,4 +50,4 @@ Telegraph directly from the browser.
 - [ ] All states work at 320px, 390px, and desktop with keyboard navigation.
 - [ ] Tests and `npm run check` pass; PR includes quote and payment screenshots.
 
-Abu reviews and merges; the teammate must not merge their own PR.
+Ali reviews and merges; the teammate must not merge their own PR.

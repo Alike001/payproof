@@ -11,7 +11,7 @@ Accepted planning basis: [`scope.md`](./scope.md), [`prd.md`](./prd.md), and
 - **Comprehension checks:** N/A during each atomic task; every review gate includes
   a plain-language walkthrough for the project lead.
 - **Git:** One focused commit per completed checklist item. Teammate work uses a
-  dedicated branch and pull request; Abu reviews its code and verification proof
+  dedicated branch and pull request; Ali reviews its code and verification proof
   before merging to `main`.
 - **Verification:** Required. No item completes from code inspection alone.
 - **Check-in cadence:** Milestone-based: stop only at the four review gates, a
@@ -24,7 +24,7 @@ Accepted planning basis: [`scope.md`](./scope.md), [`prd.md`](./prd.md), and
 
 ## Team Split
 
-### Abu — project lead
+### Ali — project lead
 
 - Owns repository setup, dependency/security review, Supabase schema and RLS,
   wallet authentication, Telegraph/x402, Miner adapters, exact payment logic,
@@ -88,7 +88,7 @@ delay the live quote, transfer, verification, and receipt path.
   Acceptance: Viewing a public invoice needs no login; creating or viewing history requires a free wallet signature; forged wallet fields cannot change creator or recipient; a different signed wallet cannot access another creator's dashboard; secrets remain server-only.
   Verify: Run auth unit/integration tests; manually connect, reject a signature, sign successfully, refresh, log out, and connect a second wallet; inspect the server response to confirm the creator address comes from the verified session; run lint/typecheck/build.
 
-  **Review gate 1:** Pause and give Abu a plain-language walkthrough of the live shell, mobile layout, wallet connection, free sign-in signature, and creator protection. Record requested changes before continuing.
+  **Review gate 1:** Pause and give Ali a plain-language walkthrough of the live shell, mobile layout, wallet connection, free sign-in signature, and creator protection. Record requested changes before continuing.
 
 - [x] **4. [Lead] Implement the spend-safe Telegraph x402 transport**
   Spec ref: `spec.md > Telegraph Integration > Server-only x402 client`; `spec.md > Rate Limiting And Abuse Controls`; `spec.md > Security And Privacy`
@@ -102,7 +102,7 @@ delay the live quote, transfer, verification, and receipt path.
   Acceptance: NGN, EUR, and GBP rates validate as positive, correctly directed, fresh structured data; rounded prose is ignored; both transaction adapters identify chain/status and exact official-USDC Transfer events from the known test transaction; malformed or unsupported evidence returns unavailable; a valid mismatch never triggers outcome shopping through the backup.
   Verify: Run adapter fixture tests, opt-in live tests for all four Miners, a forced-primary failure test, and the 2026-09-01 known-transaction regression; confirm x402 settlement hashes/costs are stored and no call exceeds the cap.
 
-  **Review gate 2:** Pause and show Abu the paid x402 proof, Miner identities, normalized FX/transaction evidence, costs, primary/backup behavior, and one honest failure. Do not proceed if the live transaction adapters cannot prove an exact Base Sepolia USDC transfer.
+  **Review gate 2:** Pause and show Ali the paid x402 proof, Miner identities, normalized FX/transaction evidence, costs, primary/backup behavior, and one honest failure. Do not proceed if the live transaction adapters cannot prove an exact Base Sepolia USDC transfer.
 
 - [x] **6. [Lead + teammate] Deliver invoice creation, public links, history, sharing, cancellation, and duplication**
   Spec ref: `spec.md > Components And Responsibilities > Invoice service`; `spec.md > API Contracts > POST /api/invoices`; `prd.md > Epic 3: Create and share an invoice`; `prd.md > Epic 8: Manage creator history`
@@ -128,7 +128,7 @@ delay the live quote, transfer, verification, and receipt path.
   Acceptance: Only chain 84532, official test USDC, exact recipient, exact integer amount, matching hash, and successful mined status produce Verified; payer comes from the matched Transfer event; pending/not-found stays retryable; every mismatch names the failed fact and permits a valid retry where appropriate; the same URL becomes locked receipt; no failure becomes success.
   Verify: Run the full verifier matrix, Miner-adapter fixtures, concurrency/finalization tests, Playwright state journeys, one real exact payment to Verified, and one wrong-amount payment to Mismatch; independently inspect both hashes on Base Sepolia explorer.
 
-  **Review gate 3:** Pause and let Abu personally complete the 30-second story: create a local-currency invoice, open it as client, pay test USDC, and watch the same link become a Telegraph-verified receipt. Review the code diff, database evidence, x402 proof, and explorer transaction before continuing.
+  **Review gate 3:** Pause and let Ali personally complete the 30-second story: create a local-currency invoice, open it as client, pay test USDC, and watch the same link become a Telegraph-verified receipt. Review the code diff, database evidence, x402 proof, and explorer transaction before continuing.
 
 - [ ] **10. [Lead + teammate] Add honest analytics, abuse controls, and reliability coverage**
   Spec ref: `spec.md > Rate Limiting And Abuse Controls`; `spec.md > Error Strategy`; `spec.md > Components And Responsibilities > Usage and operational evidence`; `prd.md > Epic 9: Demonstrate genuine Track 3 usage`
@@ -142,7 +142,7 @@ delay the live quote, transfer, verification, and receipt path.
   Acceptance: The public URL works from a clean mobile browser; at least one genuine external creator/payer journey is attempted and honestly recorded; the complete verified path works in production; internal activity is separate; service-wallet spend stays capped; prior real receipt and unavailable-state recovery are ready; the app remains live for judging.
   Verify: Run `npm ci`, all local checks, `npx supabase db push --dry-run`, reviewed migration push, Vercel production build, `/api/health`, opt-in paid smoke tests, clean-device Playwright/smoke path, explorer/x402 link checks, and a manual review of analytics versus actual tester sessions.
 
-  **Review gate 4:** Pause for Abu's production approval. Review the deployed URL, tester feedback, real-user counts, known limitations, screenshots, receipt, repository cleanliness, spending balance, and outage demo before freezing the build.
+  **Review gate 4:** Pause for Ali's production approval. Review the deployed URL, tester feedback, real-user counts, known limitations, screenshots, receipt, repository cleanliness, spending balance, and outage demo before freezing the build.
 
 - [ ] **12. [Lead + teammate] Prepare the Telegraph Track 3 submission handoff**
   Spec ref: `spec.md > Demo And Submission Flow > Evidence mapped to judging`; `prd.md > Submission Proof Points`

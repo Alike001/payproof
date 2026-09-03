@@ -11,7 +11,7 @@
 
 - **Date / Time Reported**: YYYY-MM-DD HH:MM UTC
 - **Tester Type**: `[ ] Internal Teammate  |  [ ] External Tester`
-- **Environment**: `[ ] Local (localhost:3100)  |  [ ] Staging  |  [ ] Production Deploy`
+- **Environment**: `[ ] Local (localhost:3000)  |  [ ] Staging  |  [ ] Production Deploy`
 - **Device & OS**: (e.g., macOS 14.5, Ubuntu 24.04, iOS 17.5, Android 14)
 - **Browser & Viewport**:
   - `[ ] Desktop (1280px+)`

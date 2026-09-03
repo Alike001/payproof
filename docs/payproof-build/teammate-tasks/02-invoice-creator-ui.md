@@ -8,7 +8,7 @@ implements the teammate portion of checklist item 6.
 
 ## Dependency
 
-Start only after Task 01 is merged and Abu posts the accepted invoice DTO/action
+Start only after Task 01 is merged and Ali posts the accepted invoice DTO/action
 contract in this issue. Never invent a temporary API or mock production data.
 
 ## Branch and PR
@@ -53,4 +53,4 @@ package without discussing it in the issue first.
 - [ ] Tests and `npm run check` pass.
 - [ ] The PR includes mobile/desktop screenshots and lists every DTO/action used.
 
-Abu reviews and merges; the teammate must not merge their own PR.
+Ali reviews and merges; the teammate must not merge their own PR.

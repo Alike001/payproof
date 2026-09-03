@@ -15,7 +15,7 @@ Before testing, ensure you have:
 1. **An EVM-Compatible Web3 Wallet**:
    - MetaMask, Rainbow, Coinbase Wallet, or Rabby.
    - Configured for **Base Sepolia** (Chain ID: `84532`, RPC: `https://sepolia.base.org`).
-2. **Base Sepolia Test ETH** (for gas fees):
+2. **Base Sepolia Test ETH** (the payer needs it for payment gas; the creator's free sign-in signature does not):
    - Obtain from the official Base Sepolia faucet: `https://www.alchemy.com/faucets/base-sepolia` or `https://faucets.chain.link`.
 3. **Official Base Sepolia Test USDC**:
    - Contract Address: `0x036CbD53842c5426634e7929541eC2318f3dCF7e`

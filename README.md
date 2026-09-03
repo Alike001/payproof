@@ -65,6 +65,12 @@ PayProof currently consumes two supported intents:
 | `CURRENCY_EXCHANGE` | How much test USDC is required for an NGN, EUR, or GBP invoice | FX Rate Mirror `20260827` with Preflight `20260828` as eligible backup |
 | `ONCHAIN_TX_LOOKUP` | Whether the saved Base Sepolia transaction exactly paid this invoice | Truvian `8453` with INTERLOCK `9007` as eligible backup |
 
+Two intents are a deliberate product choice, not a missing requirement. The
+hackathon encourages useful multi-intent integrations, but it does not require
+every application to use three intents. PayProof keeps both intents central to
+the decision: one fixes the amount to pay, and the other determines whether a
+receipt may be issued.
+
 The primary Miner is attempted first. A backup is used only when the primary is
 unavailable or returns invalid evidence—never to shop for a more convenient
 answer. Direct Miner/x402 calls prove application integration; PayProof does not
@@ -88,17 +94,13 @@ claim that they count as Miner leaderboard volume.
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    A[Freelancer creates local-currency invoice] --> B[Telegraph FX intelligence]
-    B --> C[Locked test-USDC quote]
-    C --> D[Client wallet transfers directly on Base Sepolia]
-    D --> E[Transaction hash saved immediately]
-    E --> F[Telegraph on-chain intelligence]
-    F --> G{Exact local checks}
-    G -->|Every fact matches| H[Verified receipt on the same link]
-    G -->|Any fact differs| I[Named mismatch; no receipt]
-```
+| Stage | What happens | Trust boundary |
+| --- | --- | --- |
+| Invoice | The freelancer creates a local-currency invoice with a wallet-locked recipient. | Supabase ownership rules protect creator-only actions. |
+| Quote | Telegraph currency intelligence returns evidence used to lock the exact test-USDC amount for 15 minutes. | Miner output is normalized and validated on the server. |
+| Payment | The payer transfers official test USDC directly to the freelancer on Base Sepolia. | PayProof never holds or redirects the funds. |
+| Verification | Telegraph on-chain intelligence reports the mined transfer facts. | The server independently checks chain, token, recipient, amount, hash, and success status. |
+| Decision | An exact match produces a permanent receipt; any mismatch names the failed requirement and produces no receipt. | A wallet response, RPC result, hash, or screenshot alone can never verify an invoice. |
 
 The browser can request a transfer, but only server-side normalized Telegraph
 evidence plus exact local checks can finalize an invoice. Telegraph payment keys,
@@ -220,6 +222,26 @@ PayProof verifies payment facts. It does not verify work delivery, identity,
 quality, tax obligations, or disputes, and it cannot reverse or refund a direct
 wallet transfer.
 
+## Deployment status and future improvements
+
+PayProof currently runs as a completed local Base Sepolia MVP and has not yet
+been publicly deployed. A hosted testnet release and genuine external tester
+journeys are the next milestone; local developer activity will remain separated
+from outside adoption evidence.
+
+After the hackathon MVP is deployed and stable, useful improvements include:
+
+- evaluating `WALLET_BALANCE_CHECK` or `GAS_PRICE` as an optional third intent
+  for payer readiness, but only if live Miner quality makes the signal useful;
+- comparing Telegraph auto-routing with the current explicit primary/backup
+  strategy;
+- adding notification, recurring/partial-payment, and additional-currency
+  workflows after their security and product boundaries are designed; and
+- assessing mainnet support only after a separate security, legal, and economic
+  review.
+
+These are roadmap ideas, not claims about the current product.
+
 ## Project documentation
 
 - [Accepted scope](docs/payproof-build/scope.md)
@@ -231,7 +253,8 @@ wallet transfer.
 
 ## Team
 
-PayProof is built by **Bravo**, a two-developer team. Abu leads architecture,
+PayProof is built by **Bravo**, a two-developer team. Ali
+([@Alike001](https://github.com/Alike001)) leads architecture,
 security-sensitive integrations, database contracts, Telegraph/x402 work, and
 pull-request review. The teammate owns assigned interface, accessibility,
 responsive, browser-testing, and tester-handoff slices through reviewed feature

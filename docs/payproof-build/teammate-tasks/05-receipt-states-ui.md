@@ -47,4 +47,4 @@ already-normalized state only. Do not create any local “verified” fallback.
 - [ ] Mobile/desktop, keyboard, share, print, tests, and `npm run check` pass.
 - [ ] PR contains screenshots for Verified, Mismatch, Unavailable, and print.
 
-Abu reviews and merges; the teammate must not merge their own PR.
+Ali reviews and merges; the teammate must not merge their own PR.
