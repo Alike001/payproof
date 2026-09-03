@@ -1,4 +1,5 @@
 import { submitPaymentAttempt } from "@/features/payments/payment-service.server";
+import { operationalLog } from "@/lib/observability/logger.server";
 
 export const runtime = "nodejs";
 
@@ -11,6 +12,11 @@ export async function POST(
   try {
     input = await request.json();
   } catch {
+    operationalLog("error", "payment_submission", {
+      outcome: "unavailable",
+      requestId,
+      code: "PAYMENT_UNAVAILABLE",
+    });
     input = null;
   }
 

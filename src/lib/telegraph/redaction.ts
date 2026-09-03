@@ -39,6 +39,9 @@ export function redactForPersistence(value: unknown, depth = 0): unknown {
 export function safeErrorMessage(error: unknown): string {
   const message = error instanceof Error ? error.message : "Unknown Telegraph error";
   return message
+    .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, "[REDACTED_EMAIL]")
+    .replace(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g, "[REDACTED_NETWORK]")
+    .replace(/Bearer\s+[^\s,;]+/gi, "Bearer [REDACTED]")
     .replace(/0x[0-9a-fA-F]{64,}/g, "[REDACTED_HEX]")
     .slice(0, 500);
 }

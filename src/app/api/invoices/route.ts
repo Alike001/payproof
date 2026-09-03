@@ -2,6 +2,7 @@ import {
   CreatorAuthenticationError,
   publishInvoice,
 } from "@/features/invoices/invoice-service.server";
+import { operationalLog } from "@/lib/observability/logger.server";
 
 export const runtime = "nodejs";
 
@@ -49,6 +50,11 @@ export async function POST(request: Request) {
         { status: 401 },
       );
     }
+    operationalLog("error", "invoice_publish", {
+      outcome: "unavailable",
+      requestId,
+      code: "PUBLISH_UNAVAILABLE",
+    });
     return Response.json(
       {
         ok: false,

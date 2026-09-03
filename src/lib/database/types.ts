@@ -319,6 +319,7 @@ export type Database = {
           actor_wallet_hash: string | null
           anonymous_session_hash: string | null
           creator_user_id: string | null
+          dedupe_key: string | null
           event_name: string
           id: string
           invoice_id: string | null
@@ -331,6 +332,7 @@ export type Database = {
           actor_wallet_hash?: string | null
           anonymous_session_hash?: string | null
           creator_user_id?: string | null
+          dedupe_key?: string | null
           event_name: string
           id?: string
           invoice_id?: string | null
@@ -343,6 +345,7 @@ export type Database = {
           actor_wallet_hash?: string | null
           anonymous_session_hash?: string | null
           creator_user_id?: string | null
+          dedupe_key?: string | null
           event_name?: string
           id?: string
           invoice_id?: string | null

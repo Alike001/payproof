@@ -13,6 +13,18 @@ const client = createPublicClient({
   transport: http(),
 });
 
+type ChainIdLookup = () => Promise<number>;
+
+export async function checkBaseSepoliaConnection(
+  chainIdLookup: ChainIdLookup = () => client.getChainId(),
+): Promise<boolean> {
+  try {
+    return (await chainIdLookup()) === baseSepolia.id;
+  } catch {
+    return false;
+  }
+}
+
 type ReceiptLookup = (hash: Hash) => Promise<{
   transactionHash: Hash;
   blockNumber: bigint;

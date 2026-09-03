@@ -8,6 +8,7 @@ import type {
 } from "@/features/invoices/types";
 import { PublicInvoicePayment } from "@/features/payments/public-invoice-payment";
 import styles from "./public-invoice-card.module.css";
+import { recordPublicShare } from "@/features/analytics/usage-tracker";
 
 function StatusBadge({ status }: { status: PublicInvoiceStatus }) {
   switch (status) {
@@ -143,6 +144,7 @@ export function PublicInvoiceCard({
     if (navigator.share && typeof navigator.share === "function") {
       try {
         await navigator.share(shareData);
+        recordPublicShare(invoice.publicId, "native_share");
         setFeedbackMessage("Shared successfully!");
         clearFeedbackAfter(3000);
         return;
@@ -159,6 +161,7 @@ export function PublicInvoiceCard({
         throw new Error("Clipboard API unavailable");
       }
       await navigator.clipboard.writeText(shareData.url);
+      recordPublicShare(invoice.publicId, "clipboard");
       setCopied(true);
       setFeedbackMessage("Link copied to clipboard!");
       clearFeedbackAfter(3000);

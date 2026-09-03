@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { requestInvoiceQuote } from "@/features/quotes/quote-service.server";
+import { operationalLog } from "@/lib/observability/logger.server";
 
 export const runtime = "nodejs";
 
@@ -14,6 +15,11 @@ export async function POST(
   try {
     body = await request.json();
   } catch {
+    operationalLog("error", "quote_request", {
+      outcome: "unavailable",
+      requestId,
+      code: "QUOTE_UNAVAILABLE",
+    });
     body = null;
   }
   if (!emptyInputSchema.safeParse(body).success) {

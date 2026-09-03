@@ -28,6 +28,7 @@ import { getAdminDatabaseClient } from "@/lib/database/admin.server";
 import { getPublicAppUrl } from "@/lib/database/config";
 import { parseLocalAmount } from "@/lib/money";
 import { readLatestPublicPaymentResult } from "@/features/payments/payment-result-read.server";
+import { recordUsageEvent } from "@/features/analytics/record-event.server";
 
 const invoiceColumns =
   "id,public_id,creator_user_id,creator_wallet,freelancer_name,client_reference,description,currency,amount_minor,minor_unit_decimals,recipient_wallet,due_date,lifecycle,created_at,cancelled_at,verified_at";
@@ -129,6 +130,14 @@ export async function publishInvoice(
       retryable: true,
     };
   }
+
+  await recordUsageEvent({
+    event: "invoice_created",
+    invoiceId: data.id,
+    creatorUserId: creator.userId,
+    actorWallet: creator.address,
+    dedupeBucket: data.id,
+  });
 
   return {
     ok: true,
@@ -274,6 +283,13 @@ export async function cancelCreatorInvoice(
       retryable: true,
     };
   }
+  await recordUsageEvent({
+    event: "invoice_cancelled",
+    invoiceId: data.id,
+    creatorUserId: creator.userId,
+    actorWallet: creator.address,
+    dedupeBucket: data.id,
+  });
   return {
     ok: true,
     invoice: toCreatorInvoiceItem({ row: data, ...applicationContext() }),

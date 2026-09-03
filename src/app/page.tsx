@@ -1,5 +1,6 @@
 import Link from "next/link";
 import styles from "./home.module.css";
+import { UsageTracker } from "@/features/analytics/usage-tracker";
 
 const steps = [
   {
@@ -50,6 +51,7 @@ function BrandMark() {
 export default function Home() {
   return (
     <div className={styles.page}>
+      <UsageTracker event="landing_view" />
       <div className={styles.testnetNotice} role="status">
         <span className={styles.noticeDot} />
         Base Sepolia testnet · Test USDC only · No real funds

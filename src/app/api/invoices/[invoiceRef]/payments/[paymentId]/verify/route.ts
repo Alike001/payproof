@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { verifyPaymentAttempt } from "@/features/payments/verification-service.server";
+import { operationalLog } from "@/lib/observability/logger.server";
 
 export const runtime = "nodejs";
 
@@ -14,6 +15,11 @@ export async function POST(
   try {
     input = await request.json();
   } catch {
+    operationalLog("error", "payment_verification", {
+      outcome: "unavailable",
+      requestId,
+      code: "VERIFICATION_UNAVAILABLE",
+    });
     input = null;
   }
   if (!emptyInputSchema.safeParse(input).success) {

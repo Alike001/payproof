@@ -143,6 +143,9 @@ export function WalletAuthCard({
 
       if (authError) throw authError;
       setCreatorAddress(getVerifiedCreatorAddress(data.user));
+      void fetch("/api/analytics/creator-session", { method: "POST" }).catch(
+        () => undefined,
+      );
       router.refresh();
     } catch (signInError) {
       setError(errorMessage(signInError));

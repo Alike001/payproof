@@ -818,3 +818,52 @@ is claimed until Abu routes this checkpoint through the agreed PR process.
   tests (24 live/opt-in tests skipped), and a successful optimized production
   build. Review Gate 3 remains open until Abu confirms the corrected real public
   invoice and creator dashboard presentation.
+
+## 2026-09-03 — Review Gate 3 accepted
+
+- Abu reviewed the real mismatch details, the corrected public status and retry
+  warning, the creator-history state, and the permanent verified receipt, then
+  explicitly accepted Review Gate 3.
+- Checklist item 10 is now active. Lead work owns analytics integrity, abuse and
+  operational controls, health reporting, redacted logs, and production-safety
+  checks. Teammate issue #6 is released for browser, accessibility, responsive,
+  and tester-handoff work that does not alter decision logic.
+
+## 2026-09-03 — Item 10 lead hardening slice
+
+- Migration `009_usage_analytics.sql` adds an explicit event allowlist for
+  mismatch/unavailable outcomes, one-way deduplication keys, and source indexes.
+  Browser view/share events use a 30-day HttpOnly analytics session, daily
+  network hashes, one event per person/invoice/day, and a secondary 30/minute
+  network-hash limit. Raw session and network values are never stored.
+- Creator sign-in, invoice creation/cancellation, landing, invoice, receipt, and
+  successful-share actions now emit best-effort evidence. Analytics rejection or
+  downtime cannot break authentication, sharing, publication, or cancellation.
+  The two wallets used for project-team payment testing are configured locally
+  as internal; the diagnostic curl events were deleted, and the 25 prior local
+  invoice events were honestly relabelled internal without changing payment,
+  quote, Telegraph, or receipt evidence.
+- A server-computed judging summary counts distinct creators, public viewers,
+  payer wallets, invoices, quotes, attempts, outcomes, receipts, source classes,
+  Telegraph intents, paid successes, and test-USDC spend. Only a signed-in wallet
+  listed in `INTERNAL_TEST_WALLETS` can read it. The output explicitly sets
+  `minerLeaderboardVolumeClaimed: false` because direct x402 Miner calls prove
+  application integration but do not count as Miner leaderboard traffic.
+- `GET /api/health` performs only free configuration, database, and Base Sepolia
+  checks. A live local request returned HTTP 200 with all three dependencies
+  ready and `Cache-Control: no-store`; no Telegraph request or payment occurred.
+- Structured operational logs now contain allowlisted identifiers/outcomes and
+  redact email, IPv4/IPv6, bearer, and private hexadecimal material. The global
+  response baseline also sets nosniff, frame denial, strict referrer policy,
+  restricted browser permissions, resource isolation, and wallet-compatible
+  opener isolation. A source scan guards against production verification mocks
+  and demo bypass flags.
+- The local analytics integration test proved two identical events create one
+  row and that the raw session value is absent. Database migration lint passed;
+  a database privacy scan found zero malformed analytics hashes, zero contact or
+  raw IPv4 values in usage metadata, and zero raw authorization, payment
+  signature, or private-key fields in stored Telegraph request records.
+  `npm run test:coverage` passed 201 tests (25 opt-in/live tests skipped),
+  `npm run check` passed, and Playwright passed the available desktop/mobile
+  invalid-link checks. The two environment-dependent journey tests remain
+  skipped pending teammate issue #6, so checklist item 10 remains open.
