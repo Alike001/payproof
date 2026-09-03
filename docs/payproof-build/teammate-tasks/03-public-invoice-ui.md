@@ -49,4 +49,4 @@ logic, or add mocks to a production path.
 - [ ] Keyboard, focus, announcements, tests, and `npm run check` pass.
 - [ ] PR includes screenshots for Open, Overdue, Cancelled, and not-found.
 
-Abu reviews and merges; the teammate must not merge their own PR.
+Ali reviews and merges; the teammate must not merge their own PR.

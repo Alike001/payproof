@@ -56,7 +56,7 @@ findings to those folders instead of expanding this file.
 
 ## PR And Review Expectations
 
-Abu is integration lead and reviews every teammate pull request before merge.
+Ali is integration lead and reviews every teammate pull request before merge.
 The teammate owns assigned UI and testing slices on short feature branches. Keep
 one checklist item per commit, explain verification in the PR, and call out any
 environment or migration change explicitly.

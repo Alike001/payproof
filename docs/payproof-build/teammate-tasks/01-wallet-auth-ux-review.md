@@ -5,7 +5,7 @@
 Make the wallet access step understandable and comfortable on a phone without
 changing how authentication or wallet verification works.
 
-This is a real pull-request task for PayProof's second teammate. Abu remains the
+This is a real pull-request task for PayProof's second teammate. Ali remains the
 reviewer and merge owner.
 
 ## Start here
@@ -65,9 +65,9 @@ instead of implementing it.
 
 ## Pull request handoff
 
-Open the PR against `main` and request Abu's review. Use this title:
+Open the PR against `main` and request Ali's review. Use this title:
 
 `feat: improve wallet authentication UX`
 
-Do not merge it yourself. Abu will review the diff, run the checks, and merge it
+Do not merge it yourself. Ali will review the diff, run the checks, and merge it
 after confirming that the verified-session security behavior is unchanged.

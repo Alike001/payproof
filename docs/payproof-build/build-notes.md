@@ -11,7 +11,7 @@
   independently checked receipt.
 - Intended market: international freelancers, with Nigerian remote freelancers
   as the initial reachable cohort rather than an NGN-only permanent identity.
-- Team: two people; Abu is primary implementer and merge reviewer.
+- Team: two people; Ali is primary implementer and merge reviewer.
 - Tester recruitment: direct contacts, social media, and WhatsApp Status.
 - No implementation has started.
 
@@ -170,7 +170,7 @@ The participant accepted all five proposed safeguards:
 - Four review gates are fixed: usable shell/auth, paid Telegraph proof, complete
   invoice-to-receipt journey, and production readiness.
 - Git cadence is one focused commit per checklist item. The teammate works
-  through short branches and pull requests; Abu reviews before merging.
+  through short branches and pull requests; Ali reviews before merging.
 - Comprehension is handled through plain-language milestone walkthroughs rather
   than interrupting every implementation step.
 
@@ -179,7 +179,7 @@ The participant accepted all five proposed safeguards:
 The participant explicitly reminded the planning process not to forget the
 second teammate. The checklist therefore gives the teammate ownership of
 interface, responsive behavior, browser coverage, screenshots, and presentation
-work, while Abu retains auth, database/RLS, x402, Miner normalization, exact
+work, while Ali retains auth, database/RLS, x402, Miner normalization, exact
 verification, deployment secrets, and shared contracts. This split is designed
 to create parallel progress with minimal same-file conflict.
 
@@ -229,7 +229,7 @@ artifact before implementation begins.
 
 Codex implemented the initial shell centrally so the technical foundation did
 not wait on branch coordination. The teammate workflow remains intact: future
-UI/testing slices use short pull requests reviewed by Abu. No teammate
+UI/testing slices use short pull requests reviewed by Ali. No teammate
 contribution or review is claimed for this first commit.
 
 ## 2026-09-01 — Checklist item 2 implementation
@@ -310,7 +310,7 @@ money arithmetic, privileged clients, or atomic functions directly.
 The lead owns the identity extraction, session guard, Supabase provider setting,
 and wallet configuration. The teammate's review slice is the wording, 390px
 wallet affordances, and authenticated/signed-out screenshots; no teammate review
-is claimed until Abu routes this checkpoint through the agreed PR process.
+is claimed until Ali routes this checkpoint through the agreed PR process.
 
 ## 2026-09-01 — Deliberate Telegraph devnet timeout adjustment
 
@@ -431,7 +431,7 @@ is claimed until Abu routes this checkpoint through the agreed PR process.
 
 ## 2026-09-02 — Review gate 2 accepted
 
-- Abu accepted review gate 2 after reviewing the six paid x402 paths, Miner
+- Ali accepted review gate 2 after reviewing the six paid x402 paths, Miner
   identities, normalized FX and transaction evidence, settlement costs,
   primary/backup behavior, and the honestly persisted earlier EUR failure.
 - Checklist item 6 may now begin. The lead will establish authenticated invoice
@@ -679,13 +679,13 @@ is claimed until Abu routes this checkpoint through the agreed PR process.
 - Items 8 and 9 remain open. Completion still requires a small real Base
   Sepolia test-USDC transfer, immediate hash-persistence proof, one exact live
   Telegraph verification to Verified, one wrong-amount live Mismatch, explorer
-  inspection, and Abu's Review Gate 3 walkthrough.
+  inspection, and Ali's Review Gate 3 walkthrough.
 
 ## 2026-09-02 — Live item 8 pre-sign inspection and wallet-choice regression
 
 - Recorded the second public progress update:
   `https://x.com/IamAlikeX/status/2095262512153346204?s=20`.
-- Abu created the real local NGN 50.00 invoice at public ID
+- Ali created the real local NGN 50.00 invoice at public ID
   `2566f7c0-3833-4498-9b93-2a739e603d1e`. It remains Open with no payment
   record. The selected live quote requires exactly 37,520 official test-USDC
   base units (`0.037520` test USDC) and expires after 15 minutes.
@@ -719,7 +719,7 @@ is claimed until Abu routes this checkpoint through the agreed PR process.
 
 ## 2026-09-02 — Item 8 real Base Sepolia payment proof complete
 
-- Abu personally reviewed and approved the prepared transfer before signing:
+- Ali personally reviewed and approved the prepared transfer before signing:
   quote `f7fec0c9-0cbd-4a02-bbd3-566a9530a5de`, Base Sepolia chain `84532`,
   official test-USDC contract `0x036CbD53842c5426634e7929541eC2318f3dCF7e`,
   recipient `0x67FEF9A8e7054b6d8c50453bA1A55d7812A54d12`, payer
@@ -768,7 +768,7 @@ is claimed until Abu routes this checkpoint through the agreed PR process.
 
 ## 2026-09-03 — Item 9 real wrong-amount rejection complete
 
-- Abu deliberately sent transaction
+- Ali deliberately sent transaction
   `0x950db3d257bcd3e084ccedd2659e80a45cd87e2f52ab2a795e224d712cf0f5af`
   on Base Sepolia to test the exact-payment guard. Independent JSON-RPC receipt
   inspection showed successful status, the official test-USDC contract, payer
@@ -790,12 +790,12 @@ is claimed until Abu routes this checkpoint through the agreed PR process.
   reported no console errors or failed requests. The evidence screenshot is
   saved outside the repository at
   `/home/ali/Desktop/payproof-live-wrong-amount-mismatch.png`.
-- Item 9 is complete. Review Gate 3 is now active: Abu must review the exact and
+- Item 9 is complete. Review Gate 3 is now active: Ali must review the exact and
   mismatch evidence plus the 30-second product story before item 10 begins.
 
 ## 2026-09-03 — Review Gate 3 mismatch-status correction
 
-- Abu's review correctly identified that a terminal mismatched payment and an
+- Ali's review correctly identified that a terminal mismatched payment and an
   open invoice are separate facts. The invoice must remain payable, but showing
   only `Open` hid the most useful current status and conflicted with the accepted
   compound-state resolution.
@@ -816,12 +816,12 @@ is claimed until Abu routes this checkpoint through the agreed PR process.
   children fixed it while preserving the table's local horizontal scrolling.
 - `npm run check` passed with warning-free lint, strict TypeScript, 187 passing
   tests (24 live/opt-in tests skipped), and a successful optimized production
-  build. Review Gate 3 remains open until Abu confirms the corrected real public
+  build. Review Gate 3 remains open until Ali confirms the corrected real public
   invoice and creator dashboard presentation.
 
 ## 2026-09-03 — Review Gate 3 accepted
 
-- Abu reviewed the real mismatch details, the corrected public status and retry
+- Ali reviewed the real mismatch details, the corrected public status and retry
   warning, the creator-history state, and the permanent verified receipt, then
   explicitly accepted Review Gate 3.
 - Checklist item 10 is now active. Lead work owns analytics integrity, abuse and
@@ -867,3 +867,27 @@ is claimed until Abu routes this checkpoint through the agreed PR process.
   `npm run check` passed, and Playwright passed the available desktop/mobile
   invalid-link checks. The two environment-dependent journey tests remain
   skipped pending teammate issue #6, so checklist item 10 remains open.
+
+## 2026-09-03 — Teammate PR #16 review correction
+
+- Review found that the proposed browser suite rendered copied HTML with
+  `page.setContent()` instead of exercising PayProof. It also embedded stale
+  Miner labels and recovery wording, so those assertions could pass while the
+  application was broken. The suite was replaced with real-route checks for the
+  landing page, creator workspaces, invalid-link recovery, keyboard focus, and
+  320px/390px/desktop overflow.
+- Placeholder Supabase and analytics credentials were removed from Playwright
+  configuration, and unrelated package-lock churn was restored to the reviewed
+  main-branch versions. Local browser tests now use the developer's actual
+  ignored environment rather than fake configuration fallbacks.
+- Tester and demo instructions now match the real health response, free creator
+  signature, exact 37,500-versus-37,499 mismatch evidence, current retry label,
+  and measured coverage. The documentation no longer claims 100% coverage.
+- The full real-route Playwright suite passed 10 tests across desktop and mobile.
+  `npm run check` passed 201 tests with 25 opt-in/live tests skipped, and the
+  optimized Next.js build succeeded. Coverage is 58.86% statements, 53.26%
+  branches, 59.62% functions, and 60.56% lines. Local database lint reports no
+  schema errors.
+- Checklist item 10 remains open until the reviewed PR is merged. Deployment,
+  production screenshots, and genuine external testing remain checklist item
+  11 work and are not claimed by this PR.

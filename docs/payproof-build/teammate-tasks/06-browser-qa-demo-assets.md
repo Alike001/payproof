@@ -7,9 +7,11 @@ evidence for checklist items 10–12.
 
 ## Dependency
 
-Start after Task 05 is merged and Abu confirms the deployed workflow and test
-accounts/funds are ready. Never test with mainnet funds or private keys supplied
-through chat, issues, screenshots, or committed files.
+Start after Task 05 is merged and Ali confirms the local workflow and disposable
+test accounts/funds are ready. Production smoke testing and production
+screenshots remain part of checklist item 11 after deployment. Never test with
+mainnet funds or private keys supplied through chat, issues, screenshots, or
+committed files.
 
 ## Branch and PR
 
@@ -21,13 +23,16 @@ through chat, issues, screenshots, or committed files.
 
 - Expand Playwright coverage for creator sign-in, create/review/publish, public
   view, quote, wallet rejection, submitted payment, unavailable verification,
-  mismatch, and verified receipt paths using approved test fixtures/harnesses.
+  mismatch, and verified receipt paths using real application routes and
+  approved disposable database fixtures. Do not copy product markup into a
+  standalone test harness and present it as application coverage.
 - Add keyboard/accessibility and 320px/390px/desktop responsive assertions.
 - Write a one-page tester guide covering Base Sepolia, test ETH/test USDC,
   expected steps, safe failure reporting, and no-real-value warning.
-- Capture current production screenshots for the 30-second story and failure
-  recovery. Redact private keys, raw payment authorizations, and unnecessary
-  personal information.
+- Capture current local screenshots for the 30-second story and failure
+  recovery. Capture production evidence separately after deployment. Redact
+  private keys, raw payment authorizations, and unnecessary personal
+  information.
 - Record tester observations in the approved consent-safe format; distinguish
   internal tests from genuine external use.
 - Draft a concise demo checklist and issue reproduction template.
@@ -48,4 +53,4 @@ logic merely to make a test pass. Report product defects in separate issues.
 - [ ] `npm ci`, browser suite, and `npm run check` pass.
 - [ ] PR links each artifact to the corresponding hackathon judging criterion.
 
-Abu reviews and merges; the teammate must not merge their own PR.
+Ali reviews and merges; the teammate must not merge their own PR.

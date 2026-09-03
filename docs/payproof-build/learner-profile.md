@@ -5,9 +5,9 @@ Recorded: 2026-09-01.
 ## Team
 
 - Two-person team.
-- Abu expects to implement most of the product.
+- Ali expects to implement most of the product.
 - The second contributor will work through pull requests.
-- Abu will review the contributor's code before merging to the main branch.
+- Ali will review the contributor's code before merging to the main branch.
 - AI-assisted development is expected throughout the build.
 
 ## Working Style
