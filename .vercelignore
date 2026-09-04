@@ -1,0 +1,26 @@
+# Local dependencies and build output
+node_modules/
+.next/
+out/
+build/
+coverage/
+
+# Local and generated test artifacts
+test-results/
+playwright-report/
+.playwright-mcp/
+.auth/
+*.tsbuildinfo
+next-env.d.ts
+
+# Secrets and local provider state
+.env*
+!.env.example
+*.pem
+.vercel/
+
+# Repository-only material that is not part of the Next.js runtime
+.git/
+.github/
+.thoughts/
+research/reference-repos/

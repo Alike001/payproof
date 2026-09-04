@@ -981,3 +981,31 @@ is claimed until Ali routes this checkpoint through the agreed PR process.
   `Invoice Not Found`, had equal 390px client and scroll widths, and emitted no
   console errors. The public deployment is ready for Ali's disposable-wallet
   creator and payer walkthrough.
+
+## 2026-09-04 — Canonical production-domain hardening
+
+- MetaMask classified the generic `payproof-two.vercel.app` deployment as a
+  potentially malicious website even though the host was absent from MetaMask's
+  public phishing blocklist and runtime stale list. The application connection
+  path requests no approval, permit, or transfer, so this is being treated as a
+  domain-reputation false positive rather than bypassed for external testers.
+- The canonical production URL changed to the more distinctive
+  `https://payproof-by-bravo.vercel.app`. The previous Vercel alias remains
+  available so existing public links do not break, and it stays in Supabase's
+  redirect allowlist for compatibility.
+- The new origin must be added to the existing Reown project allowlist before
+  wallet QA is accepted. Review Gate 4 and genuine external testing remain
+  pending until the canonical origin passes a clean wallet check.
+- Added an explicit `.vercelignore` so local dependencies, build/test output,
+  secrets, provider state, Git metadata, and third-party research clones are
+  never included in Vercel CLI deployment uploads. This reduced the production
+  source upload from an interrupted 226.8 MB attempt to 945.8 KB.
+- Vercel's production `NEXT_PUBLIC_APP_URL` and hosted Supabase Auth now use the
+  canonical origin. Fresh production deployment
+  `dpl_12WacTRJtgtY442BKsnuts5iLWRn` serves both the new canonical alias and the
+  retained legacy alias. Both home pages and `/api/health` return HTTP 200, with
+  the database, Telegraph configuration, and Base Sepolia reported ready.
+- Clean-browser QA loaded the canonical creator route at 390x844 with equal
+  client and scroll widths and the wallet action present. Reown correctly
+  rejected the not-yet-allowlisted new origin, confirming that its dashboard
+  update remains the one manual configuration step before wallet QA.
