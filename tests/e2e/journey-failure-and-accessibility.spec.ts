@@ -29,6 +29,8 @@ function initialViewport(projectName: string) {
 }
 
 test.describe("real application shell, accessibility, and failure-state QA", () => {
+  test.describe.configure({ timeout: 60_000 });
+
   test("landing page explains the product and supports keyboard entry", async (
     { baseURL },
     testInfo,

@@ -130,7 +130,7 @@ delay the live quote, transfer, verification, and receipt path.
 
   **Review gate 3:** Pause and let Ali personally complete the 30-second story: create a local-currency invoice, open it as client, pay test USDC, and watch the same link become a Telegraph-verified receipt. Review the code diff, database evidence, x402 proof, and explorer transaction before continuing.
 
-- [ ] **10. [Lead + teammate] Add honest analytics, abuse controls, and reliability coverage**
+- [x] **10. [Lead + teammate] Add honest analytics, abuse controls, and reliability coverage**
   Spec ref: `spec.md > Rate Limiting And Abuse Controls`; `spec.md > Error Strategy`; `spec.md > Components And Responsibilities > Usage and operational evidence`; `prd.md > Epic 9: Demonstrate genuine Track 3 usage`
   What to build: The lead implements allowlisted/deduplicated usage events, privacy-safe hashes, internal-wallet tagging, server-only judging aggregates, endpoint rate checks, health endpoint, structured redacted logs, security headers, and production mock exclusion. The teammate expands Playwright/accessibility/responsive coverage and improves empty/error/retry wording without changing decision logic.
   Acceptance: Reports distinguish creators, viewers, payer wallets, invoices, quotes, attempts, outcomes, receipts, internal traffic, and Telegraph calls; direct calls are not labelled Miner leaderboard volume; raw network addresses/contact details are absent; repeated refreshes do not become fake users; all defined failures have useful UI.

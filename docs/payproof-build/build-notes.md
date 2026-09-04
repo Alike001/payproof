@@ -891,3 +891,25 @@ is claimed until Ali routes this checkpoint through the agreed PR process.
 - Checklist item 10 remains open until the reviewed PR is merged. Deployment,
   production screenshots, and genuine external testing remain checklist item
   11 work and are not claimed by this PR.
+
+## 2026-09-04 — Item 10 post-merge audit complete
+
+- PR #16 was merged as `c98b15e`, and `main` was fast-forwarded before the
+  checklist status changed. The merged branch passed warning-free lint, strict
+  TypeScript, 201 tests with 25 opt-in/live tests skipped, and the optimized
+  Next.js build.
+- Coverage passed at 58.86% statements, 53.26% branches, 59.62% functions, and
+  60.56% lines. Local database lint reported no schema errors.
+- The first full Playwright audit exposed a startup-only timeout in the first
+  external-Chrome test. The suite previously depended on Playwright's 30-second
+  default while the external browser and development machine were cold. The
+  real-route suite now gives each test a documented 60-second ceiling; the full
+  desktop/mobile run then passed all 10 tests without retries.
+- A real local `GET /api/health` returned HTTP 200 with `status`, `database`,
+  `telegraphConfig`, and `baseSepolia` all `ready`, plus `Cache-Control:
+  no-store` and the expected security headers. It made no paid Telegraph call.
+- Combined failure proof now covers the real 37,500-versus-37,499 payment
+  mismatch, wallet rejection with no stored transaction, unavailable/expired
+  intelligence with payment paused, and invalid/cancelled/overdue public states.
+  Item 10 is complete. Item 11 deployment and genuine external usage are now
+  active; no production deployment or outside adoption is claimed yet.
