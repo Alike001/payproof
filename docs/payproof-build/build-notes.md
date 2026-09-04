@@ -1028,3 +1028,18 @@ is claimed until Ali routes this checkpoint through the agreed PR process.
   claim that MetaMask has cleared the application. External tester recruitment
   remains paused until the new origin is allowlisted in Reown, has propagated,
   and passes a real disposable-wallet check.
+
+## 2026-09-04 — Randomized Telegraph Track 3 hostname trial
+
+- MetaMask produced the same caution screen on `bravo-invoice.vercel.app`, so
+  the earlier aliases did not remove the wallet warning. At Ali's direction,
+  the next canonical trial uses the previously unassigned hostname
+  `https://telegraph-track3-bravo-k7m4.vercel.app`.
+- `telegraph-track3` identifies the event context, `bravo` identifies the
+  participant team, and the random suffix prevents a collision. The name does
+  not claim to be Telegraph's official application.
+- Older aliases remain live only until the new origin passes MetaMask and Reown
+  checks; deleting them first would break already-shared invoices and X posts
+  without proving that the replacement solves the warning. After a successful
+  replacement check, they can be removed deliberately from Vercel, Supabase,
+  and Reown.
