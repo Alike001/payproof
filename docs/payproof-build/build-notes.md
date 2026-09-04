@@ -1059,3 +1059,14 @@ is claimed until Ali routes this checkpoint through the agreed PR process.
 - The corrected Auth configuration was pushed to the linked hosted Supabase
   project. A unit regression check protects the canonical, localhost, and
   retained public origin patterns.
+
+## 2026-09-04 — Restored verified canonical production origin
+
+- Ali retested `https://payproof-two.vercel.app` from the browser profile that
+  had received warnings on later aliases. MetaMask connected without displaying
+  the malicious-site warning, and a fresh SIWE attempt proceeded after the path
+  wildcard correction.
+- `https://payproof-two.vercel.app` is restored as the canonical product URL in
+  Vercel's public application metadata, hosted Supabase Auth, and repository
+  documentation. Later aliases remain redirect-compatible so existing shared
+  links are not broken, but they are no longer advertised as canonical.

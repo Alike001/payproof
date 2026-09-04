@@ -6,6 +6,10 @@ const config = readFileSync(resolve(process.cwd(), "supabase/config.toml"), "utf
 
 describe("Supabase Web3 authentication configuration", () => {
   it("allows SIWE messages signed from every supported app path", () => {
+    expect(config).toContain(
+      'site_url = "https://payproof-two.vercel.app"',
+    );
+
     const redirectLine = config
       .split("\n")
       .find((line) => line.startsWith("additional_redirect_urls = "));
