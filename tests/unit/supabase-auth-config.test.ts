@@ -16,9 +16,9 @@ describe("Supabase Web3 authentication configuration", () => {
 
     expect(redirectLine).toBeDefined();
     expect(redirectLine).toContain("http://localhost:3000/**");
-    expect(redirectLine).toContain(
-      "https://telegraph-track3-bravo-k7m4.vercel.app/**",
-    );
     expect(redirectLine).toContain("https://payproof-two.vercel.app/**");
+    expect(redirectLine).not.toMatch(
+      /payproof-by-bravo|bravo-invoice|telegraph-track3-bravo-k7m4/,
+    );
   });
 });

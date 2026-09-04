@@ -1084,3 +1084,8 @@ is claimed until Ali routes this checkpoint through the agreed PR process.
 - After these redirects pass production checks, the three experimental origins
   can be removed from Reown. The canonical production origin and localhost
   development origins remain allowlisted.
+- Production checks returned `308` from every retired hostname to the exact
+  canonical invoice path with its query string intact, while the canonical
+  verified receipt returned `200`. Supabase Auth now allowlists only the
+  canonical production origin and the two localhost development forms; Vercel
+  retains the old aliases solely so their redirects continue to resolve.
