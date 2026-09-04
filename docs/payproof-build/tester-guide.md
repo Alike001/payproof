@@ -1,5 +1,15 @@
 # PayProof Tester Guide — Base Sepolia Testnet
 
+**Live application:** <https://payproof-two.vercel.app>
+
+## Copy-and-send invitation
+
+> Hi, I am testing PayProof, a Base Sepolia testnet invoice app. It uses no real
+> money. I need you to try one short invoice or payment journey independently
+> and tell me where it becomes confusing. Please use a disposable wallet and
+> never send me a private key or recovery phrase. If you need test funds, send
+> only your public `0x...` address. Test link: `[PASTE CANONICAL INVOICE LINK]`
+
 > **CRITICAL WARNING — TESTNET ONLY**
 >
 > PayProof operates **exclusively** on the **Base Sepolia testnet** (`Chain ID: 84532`).
@@ -13,7 +23,7 @@
 
 Before testing, ensure you have:
 1. **An EVM-Compatible Web3 Wallet**:
-   - MetaMask, Rainbow, Coinbase Wallet, or Rabby.
+   - MetaMask, Rainbow, Coinbase Wallet, Rabby, or Zerion.
    - Configured for **Base Sepolia** (Chain ID: `84532`, RPC: `https://sepolia.base.org`).
 2. **Base Sepolia Test ETH** (the payer needs it for payment gas; the creator's free sign-in signature does not):
    - Obtain from the official Base Sepolia faucet: `https://www.alchemy.com/faucets/base-sepolia` or `https://faucets.chain.link`.
@@ -22,6 +32,21 @@ Before testing, ensure you have:
    - Token Decimals: `6`
    - Symbol: `USDC`
    - Can be minted from Circle's official testnet faucet: `https://faucet.circle.com/` (select Base Sepolia).
+
+### Lowest-friction funded test
+
+If a recruited tester does not already have testnet funds:
+
+1. Ask them to create a disposable EVM test wallet.
+2. Ask them to send **only the public `0x...` address**. Never request a private
+   key or recovery phrase.
+3. Send that address only enough Base Sepolia test ETH for gas and enough
+   official test USDC for the assigned invoice.
+4. Send the canonical PayProof invoice link and let them complete the journey
+   without screen sharing or step-by-step coaching unless they become blocked.
+
+Helping someone obtain testnet funds is onboarding. Performing the product
+journey for them is not genuine independent usage.
 
 ---
 
@@ -96,3 +121,14 @@ All testing data collected for the Telegraph Hackathon Season I Track 3 evaluati
 - **Separation of Activity**: Internal development/smoke tests are strictly tagged `internal` and distinguished from genuine external tester feedback.
 - **No Private Data Stored**: Invoices and receipts display only public on-chain wallet addresses, currency amounts, references, and Telegraph verification proofs.
 - **Voluntary Feedback**: Any quotes, impressions, or usability feedback submitted by testers will only be included in judging documentation with explicit tester consent.
+
+### Three feedback questions
+
+After the tester finishes or becomes blocked, ask:
+
+1. In one sentence, what do you think PayProof does?
+2. Which step was confusing or required help?
+3. Would the verified receipt be more trustworthy than a payment screenshot?
+
+Record the answers without names or contact details. Ask separately whether a
+short quote may be used in the hackathon submission.

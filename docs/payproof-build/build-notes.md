@@ -1089,3 +1089,15 @@ is claimed until Ali routes this checkpoint through the agreed PR process.
   verified receipt returned `200`. Supabase Auth now allowlists only the
   canonical production origin and the two localhost development forms; Vercel
   retains the old aliases solely so their redirects continue to resolve.
+
+## 2026-09-04 — External tester handoff prepared
+
+- The tester guide now names the canonical deployment and includes a funded
+  low-friction path: a recruited person shares only a disposable public address,
+  receives limited Base Sepolia test ETH/test USDC, and operates PayProof
+  independently. The guide explicitly separates onboarding help from someone
+  else performing the journey for the tester.
+- A consent-safe external testing log records coded participants, attempted
+  roles, public verification artifacts, outcome, help required, and three short
+  comprehension/usefulness answers. It excludes contact details, network
+  identifiers, secrets, and artificial usage claims.
