@@ -20,7 +20,7 @@ same link becomes a permanent verified receipt.
 
 ## See the product
 
-These are real local product states backed by real Base Sepolia transactions and
+These are real product states backed by real Base Sepolia transactions and
 paid Telegraph Miner calls—not fabricated demo responses.
 
 ### Exact payment becomes a verified receipt
@@ -117,7 +117,7 @@ server-only modules.
 - Telegraph direct-ask/x402 integration with strict Miner adapters
 - Decimal.js and integer minor/base units for all money calculations
 - Vitest and Playwright for unit, integration, database, and browser coverage
-- Vercel-ready Node.js deployment
+- Live Vercel Node.js deployment
 
 ## Local development
 
@@ -181,6 +181,14 @@ environment flags.
 
 ## Real verification evidence
 
+Hosted production proof:
+
+- [Canonical Telegraph-verified receipt](https://payproof-two.vercel.app/i/5e5afd70-22d2-4a80-b3dc-538411b10ca3)
+- [Base Sepolia production payment transaction](https://sepolia.basescan.org/tx/0xd62f522e2b1261ecc85d87b9505a93b9e7587c23b297eb9d8e6721c8e472a48d)
+- Required and verified amount: `37,750` USDC base units
+- Result: the hosted invoice changed from `OPEN` to `VERIFIED` after Telegraph
+  returned normalized on-chain evidence and PayProof's exact checks passed
+
 Exact-payment proof:
 
 - [Base Sepolia payment transaction](https://sepolia.basescan.org/tx/0xd98f74a8b79466bb541ccaa741e1697ab2be014d052f45b5a19a42e914122b56)
@@ -197,6 +205,12 @@ Wrong-amount rejection proof:
 
 Detailed build decisions and reproducible evidence are recorded in
 [`docs/payproof-build/build-notes.md`](docs/payproof-build/build-notes.md).
+
+## Public build updates
+
+- [PayProof project introduction](https://x.com/IamAlikeX/status/2094909102166094146)
+- [Verified-receipt implementation update](https://x.com/IamAlikeX/status/2095262512153346204)
+- [Live Base Sepolia application](https://x.com/IamAlikeX/status/2095976636575330766)
 
 ## Security and privacy boundaries
 
@@ -228,8 +242,8 @@ wallet transfer.
 
 PayProof is publicly deployed as a Base Sepolia MVP at
 [payproof-two.vercel.app](https://payproof-two.vercel.app/). Production smoke
-testing and genuine external tester journeys are in progress; local developer
-activity remains separated from outside adoption evidence.
+testing has passed; genuine external tester journeys are in progress. Local
+developer activity remains separated from outside adoption evidence.
 
 After the hackathon MVP is deployed and stable, useful improvements include:
 

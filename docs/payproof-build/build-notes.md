@@ -1109,6 +1109,10 @@ is claimed until Ali routes this checkpoint through the agreed PR process.
   <https://x.com/IamAlikeX/status/2095976636575330766?s=20>, tagged
   `@Telegraphprotoc`, and shared the update plus canonical application URL with
   the hackathon Discord community.
+- The repository README now links the canonical hosted receipt and its Base
+  Sepolia payment transaction, collects all three public X milestones, and
+  distinguishes the completed production smoke from external testing that is
+  still pending.
 - The post describes the working product without claiming unearned adoption:
   local-currency invoices, test-USDC payment, and Telegraph-backed on-chain
   receipt verification. Genuine outside-user outcomes remain the next evidence
