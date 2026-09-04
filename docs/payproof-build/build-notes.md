@@ -1043,3 +1043,19 @@ is claimed until Ali routes this checkpoint through the agreed PR process.
   without proving that the replacement solves the warning. After a successful
   replacement check, they can be removed deliberately from Vercel, Supabase,
   and Reown.
+
+## 2026-09-04 — Independent-wallet result and SIWE path allowlist fix
+
+- An independent tester connected MetaMask to
+  `https://payproof-two.vercel.app` without receiving PayProof's reported
+  malicious-site warning. This means the available evidence does not establish
+  a global block on that hostname. The randomized canonical hostname still
+  needs the same independent-device check before filing a domain-level appeal.
+- The tester's subsequent SIWE sign-in correctly exposed a separate Supabase
+  configuration defect: the signed URI included `/invoices/new`, while the
+  additional redirect entries allowed only each bare origin. Every localhost
+  and retained production origin now ends in `/**`, permitting Web3 auth from
+  application routes as documented by Supabase.
+- The corrected Auth configuration was pushed to the linked hosted Supabase
+  project. A unit regression check protects the canonical, localhost, and
+  retained public origin patterns.
