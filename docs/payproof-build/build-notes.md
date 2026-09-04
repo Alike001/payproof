@@ -1009,3 +1009,22 @@ is claimed until Ali routes this checkpoint through the agreed PR process.
   client and scroll widths and the wallet action present. Reown correctly
   rejected the not-yet-allowlisted new origin, confirming that its dashboard
   update remains the one manual configuration step before wallet QA.
+
+## 2026-09-04 — Distinct team-owned production hostname
+
+- Ali confirmed that MetaMask showed the same phishing warning on
+  `payproof-by-bravo.vercel.app` after the Reown origin was added. To remove the
+  remaining product-name collision from the hostname, the canonical URL is now
+  `https://bravo-invoice.vercel.app`; it identifies the team and product type
+  without presenting the deployment as an official Telegraph property.
+- The prior two production aliases remain live and allowlisted for compatibility
+  with already shared links. Supabase Auth uses the new canonical origin while
+  retaining all earlier production and localhost redirects.
+- WalletConnect metadata now identifies the application as `PayProof by Bravo`,
+  uses a Base Sepolia/test-USDC description, and obtains its exact URL from the
+  public build-time application origin. A unit assertion protects these fields
+  from drifting away from the deployed origin.
+- This hostname change is an external-wallet compatibility experiment, not a
+  claim that MetaMask has cleared the application. External tester recruitment
+  remains paused until the new origin is allowlisted in Reown, has propagated,
+  and passes a real disposable-wallet check.

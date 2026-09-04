@@ -28,7 +28,9 @@ describe("wallet config", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.stubEnv("NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID", "test-project-id");
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://bravo-invoice.vercel.app");
     walletMocks.createConfig.mockClear();
+    walletMocks.walletConnect.mockClear();
   });
 
   afterEach(() => vi.unstubAllEnvs());
@@ -42,6 +44,18 @@ describe("wallet config", () => {
       expect.objectContaining({
         connectors: [{ id: "injected" }, { id: "walletConnect" }],
         multiInjectedProviderDiscovery: false,
+      }),
+    );
+    expect(walletMocks.walletConnect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        projectId: "test-project-id",
+        metadata: {
+          name: "PayProof by Bravo",
+          description:
+            "Base Sepolia invoices with Telegraph-verified test-USDC receipts.",
+          url: "https://bravo-invoice.vercel.app",
+          icons: [],
+        },
       }),
     );
   });

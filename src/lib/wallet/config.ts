@@ -26,9 +26,9 @@ export function getWalletConfig() {
         projectId: walletConnectProjectId,
         showQrModal: true,
         metadata: {
-          name: "PayProof",
+          name: "PayProof by Bravo",
           description:
-            "Local-currency invoices with Telegraph-verified USDC receipts.",
+            "Base Sepolia invoices with Telegraph-verified test-USDC receipts.",
           url: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
           icons: [],
         },
