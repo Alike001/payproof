@@ -1101,3 +1101,15 @@ is claimed until Ali routes this checkpoint through the agreed PR process.
   roles, public verification artifacts, outcome, help required, and three short
   comprehension/usefulness answers. It excludes contact details, network
   identifiers, secrets, and artificial usage claims.
+
+## 2026-09-04 — Public production update
+
+- Ali published the live Base Sepolia product and its Telegraph-verified receipt
+  flow on X at
+  <https://x.com/IamAlikeX/status/2095976636575330766?s=20>, tagged
+  `@Telegraphprotoc`, and shared the update plus canonical application URL with
+  the hackathon Discord community.
+- The post describes the working product without claiming unearned adoption:
+  local-currency invoices, test-USDC payment, and Telegraph-backed on-chain
+  receipt verification. Genuine outside-user outcomes remain the next evidence
+  required for checklist item 11.
