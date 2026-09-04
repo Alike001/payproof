@@ -1,9 +1,24 @@
 import type { NextConfig } from "next";
 
+const canonicalProductionOrigin = "https://payproof-two.vercel.app";
+const legacyProductionHosts = [
+  "payproof-by-bravo.vercel.app",
+  "bravo-invoice.vercel.app",
+  "telegraph-track3-bravo-k7m4.vercel.app",
+] as const;
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactCompiler: true,
   reactStrictMode: true,
+  async redirects() {
+    return legacyProductionHosts.map((host) => ({
+      source: "/:path*",
+      has: [{ type: "host" as const, value: host }],
+      destination: `${canonicalProductionOrigin}/:path*`,
+      permanent: true,
+    }));
+  },
   async headers() {
     return [
       {

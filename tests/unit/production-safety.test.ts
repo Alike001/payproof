@@ -27,4 +27,21 @@ describe("production hardening", () => {
     expect(headers.get("Referrer-Policy")).toBe("strict-origin-when-cross-origin");
     expect(headers.get("Cross-Origin-Opener-Policy")).toBe("same-origin-allow-popups");
   });
+
+  it("redirects every legacy production host to the canonical origin", async () => {
+    const redirects = await nextConfig.redirects?.();
+
+    expect(redirects).toEqual(
+      [
+        "payproof-by-bravo.vercel.app",
+        "bravo-invoice.vercel.app",
+        "telegraph-track3-bravo-k7m4.vercel.app",
+      ].map((host) => ({
+        source: "/:path*",
+        has: [{ type: "host", value: host }],
+        destination: "https://payproof-two.vercel.app/:path*",
+        permanent: true,
+      })),
+    );
+  });
 });

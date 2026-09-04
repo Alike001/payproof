@@ -1070,3 +1070,17 @@ is claimed until Ali routes this checkpoint through the agreed PR process.
   Vercel's public application metadata, hosted Supabase Auth, and repository
   documentation. Later aliases remain redirect-compatible so existing shared
   links are not broken, but they are no longer advertised as canonical.
+
+## 2026-09-04 — Verified hosted payment and legacy-origin retirement
+
+- The production smoke invoice completed its real hosted lifecycle: an exact
+  Base Sepolia test-USDC transfer was broadcast, Telegraph intelligence checked
+  it, PayProof issued the verified receipt, and the creator dashboard changed
+  the invoice from `OPEN` to `VERIFIED`.
+- Each experimental production hostname now permanently redirects to
+  `https://payproof-two.vercel.app` while retaining the complete path and query
+  string. Existing public invoice links therefore land on the canonical origin
+  instead of initializing a wallet session on a retired hostname.
+- After these redirects pass production checks, the three experimental origins
+  can be removed from Reown. The canonical production origin and localhost
+  development origins remain allowlisted.
