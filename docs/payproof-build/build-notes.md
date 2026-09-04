@@ -1001,10 +1001,10 @@ is claimed until Ali routes this checkpoint through the agreed PR process.
   never included in Vercel CLI deployment uploads. This reduced the production
   source upload from an interrupted 226.8 MB attempt to 945.8 KB.
 - Vercel's production `NEXT_PUBLIC_APP_URL` and hosted Supabase Auth now use the
-  canonical origin. Fresh production deployment
-  `dpl_12WacTRJtgtY442BKsnuts5iLWRn` serves both the new canonical alias and the
-  retained legacy alias. Both home pages and `/api/health` return HTTP 200, with
-  the database, Telegraph configuration, and Base Sepolia reported ready.
+  canonical origin. The Git-connected production deployment from the domain
+  hardening commit serves both the new canonical alias and the retained legacy
+  alias. Both home pages and `/api/health` return HTTP 200, with the database,
+  Telegraph configuration, and Base Sepolia reported ready.
 - Clean-browser QA loaded the canonical creator route at 390x844 with equal
   client and scroll widths and the wallet action present. Reown correctly
   rejected the not-yet-allowlisted new origin, confirming that its dashboard
