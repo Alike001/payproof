@@ -969,3 +969,15 @@ is claimed until Ali routes this checkpoint through the agreed PR process.
 - This checkpoint proves deployment readiness only. A real production quote,
   Base Sepolia payment, Telegraph receipt, genuine outside tester journey, and
   Review Gate 4 remain outstanding.
+
+## 2026-09-04 — Production origin and public-browser smoke passed
+
+- Ali added `https://payproof-two.vercel.app` alongside the localhost origins
+  in the existing Reown project. A fresh production browser session then loaded
+  the creator route with zero console errors and opened the WalletConnect QR
+  chooser successfully; no wallet was connected and no message was signed by
+  the automated smoke check.
+- At a 390x844 viewport, the deployed invalid-public-link route failed closed as
+  `Invoice Not Found`, had equal 390px client and scroll widths, and emitted no
+  console errors. The public deployment is ready for Ali's disposable-wallet
+  creator and payer walkthrough.
