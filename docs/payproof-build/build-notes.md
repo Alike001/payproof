@@ -932,3 +932,22 @@ is claimed until Ali routes this checkpoint through the agreed PR process.
   credential may be pasted into chat or committed.
 - GitHub Actions for item 10 commit `8605694` passed both the locked-dependency
   quality job and the from-zero database migration/type-generation job.
+
+## 2026-09-04 — Hosted infrastructure configured
+
+- The linked hosted Supabase project is active in `eu-west-1`. A reviewed dry
+  run listed exactly migrations `001` through `009`, with no seeds, custom
+  roles, or Vault secrets. All nine migrations were then applied; local and
+  remote migration histories match, and remote schema lint reports no errors.
+- Supabase Auth now uses `https://payproof-two.vercel.app` as its site URL,
+  allowlists that production origin plus both local development origins, and
+  enables Ethereum Web3 sign-in. The complete checked-in Auth configuration was
+  pushed to the new project; no dashboard-only schema change was made.
+- Vercel production configuration now contains every environment key required
+  by `.env.example`. Hosted Supabase keys were transferred directly from the
+  authenticated CLI and existing Telegraph/wallet settings from the ignored
+  local environment; values were neither printed nor committed. Production
+  variables use Vercel's sensitive default.
+- The stable production domain is `https://payproof-two.vercel.app`. The GitHub
+  repository is connected, but production deployment and smoke testing remain
+  pending at this checkpoint.
