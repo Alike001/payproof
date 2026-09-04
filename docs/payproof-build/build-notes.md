@@ -913,3 +913,22 @@ is claimed until Ali routes this checkpoint through the agreed PR process.
   intelligence with payment paused, and invalid/cancelled/overdue public states.
   Item 10 is complete. Item 11 deployment and genuine external usage are now
   active; no production deployment or outside adoption is claimed yet.
+
+## 2026-09-04 — Item 11 deployment preflight started
+
+- Vercel CLI authentication is active for `alike001` under the
+  `alike001s-projects` scope. The local repository is linked to the Vercel
+  project `payproof`, and that project is connected explicitly to
+  `https://github.com/Alike001/payproof.git` rather than the contributor fork.
+- Vercel initially misidentified a researched FastAPI Miner nested under
+  `research/reference-repos/` as the deployment service. The generated local
+  `vercel.json` was removed before any deployment, and the remote project was
+  corrected to the Next.js preset with repository root `.` and Node.js 24.x.
+  No deployment or production environment variables exist yet.
+- Supabase CLI authentication is not present, and `.env.local` still points to
+  the local Supabase stack. Hosted project creation/linking, migration dry run,
+  and migration push are therefore the next deployment dependency. Supabase
+  login and the database password must be completed privately by Ali; neither
+  credential may be pasted into chat or committed.
+- GitHub Actions for item 10 commit `8605694` passed both the locked-dependency
+  quality job and the from-zero database migration/type-generation job.
