@@ -951,3 +951,21 @@ is claimed until Ali routes this checkpoint through the agreed PR process.
 - The stable production domain is `https://payproof-two.vercel.app`. The GitHub
   repository is connected, but production deployment and smoke testing remain
   pending at this checkpoint.
+
+## 2026-09-04 — First production deployment
+
+- Git-connected `main` deployed successfully to Vercel and the stable public
+  alias `https://payproof-two.vercel.app` resolves to that production build.
+  `GET /` returned HTTP 200 with the expected PayProof title, and browser QA
+  found the 30-second product story and creator entry actions.
+- Production `GET /api/health` returned HTTP 200 with database, Telegraph
+  configuration, and Base Sepolia all `ready`, `Cache-Control: no-store`, and
+  the expected security headers.
+- The creator route rendered without opening a wallet modal automatically, but
+  its browser console exposed a deployment blocker from Reown: the production
+  origin is not yet present in the WalletConnect project allowlist. Ali must add
+  `https://payproof-two.vercel.app` in the existing Reown project settings
+  before the real production wallet/sign-in/payment journey can be accepted.
+- This checkpoint proves deployment readiness only. A real production quote,
+  Base Sepolia payment, Telegraph receipt, genuine outside tester journey, and
+  Review Gate 4 remain outstanding.

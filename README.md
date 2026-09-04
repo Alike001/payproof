@@ -16,6 +16,8 @@ same link becomes a permanent verified receipt.
 > **Testnet only:** PayProof uses Base Sepolia and official Circle test USDC.
 > Test tokens have no real monetary value.
 
+**Live testnet application:** [payproof-two.vercel.app](https://payproof-two.vercel.app/)
+
 ## See the product
 
 These are real local product states backed by real Base Sepolia transactions and
@@ -224,10 +226,10 @@ wallet transfer.
 
 ## Deployment status and future improvements
 
-PayProof currently runs as a completed local Base Sepolia MVP and has not yet
-been publicly deployed. A hosted testnet release and genuine external tester
-journeys are the next milestone; local developer activity will remain separated
-from outside adoption evidence.
+PayProof is publicly deployed as a Base Sepolia MVP at
+[payproof-two.vercel.app](https://payproof-two.vercel.app/). Production smoke
+testing and genuine external tester journeys are in progress; local developer
+activity remains separated from outside adoption evidence.
 
 After the hackathon MVP is deployed and stable, useful improvements include:
 
